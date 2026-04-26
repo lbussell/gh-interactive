@@ -121,6 +121,9 @@ func (m menuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.KeyPressMsg:
 		switch msg.String() {
+		case "ctrl+c", "q", "esc":
+			m.done = true
+			return m, tea.Quit
 		case "enter":
 			if item, ok := m.list.SelectedItem().(menuItem); ok {
 				if item.choice == menuChoiceOpenCopilot {

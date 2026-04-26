@@ -39,7 +39,7 @@ func TestMenuQuitDoesNotSelectItem(t *testing.T) {
 
 func TestMenuOpenCopilotRunsCommand(t *testing.T) {
 	model := newMenuModel()
-	model.list.Select(1)
+	selectMenuChoice(t, &model, menuChoiceOpenCopilot)
 
 	updated, cmd := model.Update(tea.KeyPressMsg(tea.Key{Code: tea.KeyEnter}))
 	model = updated.(menuModel)
@@ -90,4 +90,18 @@ func TestMenuReportsCopilotError(t *testing.T) {
 	if !errors.Is(model.err, wantErr) {
 		t.Fatalf("err = %v, want wrapped %v", model.err, wantErr)
 	}
+}
+
+func selectMenuChoice(t *testing.T, model *menuModel, choice menuChoice) {
+	t.Helper()
+
+	for index, item := range model.list.Items() {
+		menuItem, ok := item.(menuItem)
+		if ok && menuItem.choice == choice {
+			model.list.Select(index)
+			return
+		}
+	}
+
+	t.Fatalf("menu choice %q not found", choice)
 }
