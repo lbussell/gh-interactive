@@ -2,16 +2,17 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
-
-	tea "charm.land/bubbletea/v2"
 )
 
-func openCopilot() tea.Cmd {
-	return tea.ExecProcess(exec.Command("copilot"), func(err error) tea.Msg {
-		if err != nil {
-			err = fmt.Errorf("copilot failed: %w", err)
-		}
-		return menuActionFinishedMsg{err: err}
-	})
+func openCopilot() error {
+	cmd := exec.Command("copilot")
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("copilot failed: %w", err)
+	}
+	return nil
 }

@@ -6,53 +6,53 @@ import (
 )
 
 const (
-	menuChoiceLocal        menuChoice = "Local"
-	menuChoiceOpenCopilot  menuChoice = "Open Copilot"
-	menuChoicePullRequests menuChoice = "Pull Requests"
-	menuChoiceIssues       menuChoice = "Issues"
+	menuOptionLocal        = "Local"
+	menuOptionOpenCopilot  = "Open Copilot"
+	menuOptionPullRequests = "Pull Requests"
+	menuOptionIssues       = "Issues"
 )
 
 func main() {
-	choice, selected, err := runMenu(appMenuOptions())
-	if err != nil {
+	if err := runMenu(appMenuOptions()); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to run menu: %v\n", err)
 		os.Exit(1)
-	}
-
-	if selected {
-		confirmed, err := confirmChoice(choice)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to confirm selection: %v\n", err)
-			os.Exit(1)
-		}
-		if confirmed {
-			fmt.Printf("Selected %s\n", choice)
-		}
 	}
 }
 
 func appMenuOptions() []menuOption {
 	return []menuOption{
 		{
-			title:       string(menuChoiceLocal),
+			title:       menuOptionLocal,
 			description: "Work with local repository state",
-			choice:      menuChoiceLocal,
+			run:         confirmAndPrintSelection(menuOptionLocal),
 		},
 		{
-			title:       string(menuChoicePullRequests),
+			title:       menuOptionPullRequests,
 			description: "Browse and manage pull requests",
-			choice:      menuChoicePullRequests,
+			run:         confirmAndPrintSelection(menuOptionPullRequests),
 		},
 		{
-			title:       string(menuChoiceIssues),
+			title:       menuOptionIssues,
 			description: "Browse and manage issues",
-			choice:      menuChoiceIssues,
+			run:         confirmAndPrintSelection(menuOptionIssues),
 		},
 		{
-			title:       string(menuChoiceOpenCopilot),
+			title:       menuOptionOpenCopilot,
 			description: "Launch GitHub Copilot CLI",
-			choice:      menuChoiceOpenCopilot,
-			action:      openCopilot,
+			run:         openCopilot,
 		},
+	}
+}
+
+func confirmAndPrintSelection(choice string) func() error {
+	return func() error {
+		confirmed, err := confirmChoice(choice)
+		if err != nil {
+			return err
+		}
+		if confirmed {
+			fmt.Printf("Selected %s\n", choice)
+		}
+		return nil
 	}
 }

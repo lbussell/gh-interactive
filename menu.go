@@ -7,13 +7,10 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-type menuChoice string
-
 type menuOption struct {
 	title       string
 	description string
-	choice      menuChoice
-	action      func() tea.Cmd
+	run         func() error
 }
 
 func (i menuOption) Title() string {
@@ -30,13 +27,8 @@ func (i menuOption) FilterValue() string {
 
 type menuModel struct {
 	list     list.Model
-	selected menuChoice
-	err      error
+	selected *menuOption
 	done     bool
-}
-
-type menuActionFinishedMsg struct {
-	err error
 }
 
 func newMenuModel(options []menuOption) menuModel {
@@ -53,41 +45,35 @@ func newMenuModel(options []menuOption) menuModel {
 	return menuModel{list: menuList}
 }
 
-func runMenu(options []menuOption) (menuChoice, bool, error) {
+func runMenu(options []menuOption) error {
 	finalModel, err := tea.NewProgram(newMenuModel(options)).Run()
 	if err != nil {
-		return "", false, err
+		return err
 	}
 
 	model, ok := finalModel.(menuModel)
 	if !ok {
-		return "", false, fmt.Errorf("unexpected final menu model %T", finalModel)
-	}
-	if model.err != nil {
-		return "", false, model.err
-	}
-	if model.selected == "" {
-		return "", false, nil
+		return fmt.Errorf("unexpected final menu model %T", finalModel)
 	}
 
-	return model.selected, true, nil
+	return model.runSelected()
 }
 
 func (m menuModel) Init() tea.Cmd {
 	return nil
 }
 
+func (m menuModel) runSelected() error {
+	if m.selected == nil || m.selected.run == nil {
+		return nil
+	}
+	return m.selected.run()
+}
+
 func (m menuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.list.SetSize(msg.Width, msg.Height)
-	case menuActionFinishedMsg:
-		if msg.err != nil {
-			m.err = msg.err
-			m.done = true
-			return m, tea.Quit
-		}
-		return m, nil
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
@@ -95,10 +81,7 @@ func (m menuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "enter":
 			if item, ok := m.list.SelectedItem().(menuOption); ok {
-				if item.action != nil {
-					return m, item.action()
-				}
-				m.selected = item.choice
+				m.selected = &item
 			}
 			m.done = true
 			return m, tea.Quit

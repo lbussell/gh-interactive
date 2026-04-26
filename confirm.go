@@ -13,7 +13,7 @@ type confirmFormOptions struct {
 	defaultValue bool
 }
 
-func confirmChoice(choice menuChoice) (bool, error) {
+func confirmChoice(choice string) (bool, error) {
 	return runConfirmForm(confirmFormOptions{
 		title:        fmt.Sprintf("Open %s?", choice),
 		affirmative:  "Open",

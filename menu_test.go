@@ -7,29 +7,81 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-func TestMenuSelectsCurrentItem(t *testing.T) {
-	model := newMenuModel(appMenuOptions())
+func TestMenuSelectsCurrentOption(t *testing.T) {
+	ran := false
+	model := newMenuModel([]menuOption{
+		{
+			title: "Run test",
+			run: func() error {
+				ran = true
+				return nil
+			},
+		},
+	})
 
 	updated, _ := model.Update(tea.KeyPressMsg(tea.Key{Code: tea.KeyEnter}))
 	model = updated.(menuModel)
 
-	if model.selected != menuChoiceLocal {
-		t.Fatalf("selected %q, want %q", model.selected, menuChoiceLocal)
+	if ran {
+		t.Fatal("menu should not run option before exiting")
+	}
+
+	if model.selected == nil {
+		t.Fatal("expected selected option")
+	}
+
+	if model.selected.title != "Run test" {
+		t.Fatalf("selected %q, want Run test", model.selected.title)
 	}
 
 	if !model.done {
-		t.Fatal("menu should be done after selecting an item")
+		t.Fatal("menu should be done after selecting an option")
 	}
 }
 
-func TestMenuQuitDoesNotSelectItem(t *testing.T) {
-	model := newMenuModel(appMenuOptions())
+func TestMenuRunsSelectedOption(t *testing.T) {
+	ran := false
+	model := menuModel{
+		selected: &menuOption{
+			run: func() error {
+				ran = true
+				return nil
+			},
+		},
+	}
+
+	if err := model.runSelected(); err != nil {
+		t.Fatalf("runSelected() error = %v, want nil", err)
+	}
+
+	if !ran {
+		t.Fatal("expected selected option to run")
+	}
+}
+
+func TestMenuReturnsSelectedOptionError(t *testing.T) {
+	wantErr := errors.New("boom")
+	model := menuModel{
+		selected: &menuOption{
+			run: func() error {
+				return wantErr
+			},
+		},
+	}
+
+	if err := model.runSelected(); !errors.Is(err, wantErr) {
+		t.Fatalf("runSelected() error = %v, want %v", err, wantErr)
+	}
+}
+
+func TestMenuQuitDoesNotSelectOption(t *testing.T) {
+	model := newMenuModel([]menuOption{{title: "Do not select"}})
 
 	updated, _ := model.Update(tea.KeyPressMsg(tea.Key{Code: 'q', Text: "q"}))
 	model = updated.(menuModel)
 
-	if model.selected != "" {
-		t.Fatalf("selected %q, want no selection", model.selected)
+	if model.selected != nil {
+		t.Fatalf("selected %q, want no selection", model.selected.title)
 	}
 
 	if !model.done {
@@ -37,71 +89,40 @@ func TestMenuQuitDoesNotSelectItem(t *testing.T) {
 	}
 }
 
-func TestMenuOpenCopilotRunsCommand(t *testing.T) {
+func TestMenuOpenCopilotSelectsRunnableOption(t *testing.T) {
 	model := newMenuModel(appMenuOptions())
-	selectMenuChoice(t, &model, menuChoiceOpenCopilot)
+	selectMenuOption(t, &model, menuOptionOpenCopilot)
 
 	updated, cmd := model.Update(tea.KeyPressMsg(tea.Key{Code: tea.KeyEnter}))
 	model = updated.(menuModel)
 
-	if model.selected != "" {
-		t.Fatalf("selected %q, want no menu selection", model.selected)
-	}
-
-	if model.done {
-		t.Fatal("menu should stay open while Copilot runs")
+	if !model.done {
+		t.Fatal("menu should be done after selecting Copilot")
 	}
 
 	if cmd == nil {
-		t.Fatal("expected command to open Copilot")
+		t.Fatal("expected quit command after selecting Copilot")
+	}
+
+	if model.selected == nil || model.selected.title != menuOptionOpenCopilot {
+		t.Fatalf("selected = %#v, want %q", model.selected, menuOptionOpenCopilot)
+	}
+
+	if model.selected.run == nil {
+		t.Fatal("expected Copilot option to provide run function")
 	}
 }
 
-func TestMenuReturnsAfterCopilotSucceeds(t *testing.T) {
-	model := newMenuModel(appMenuOptions())
-
-	updated, cmd := model.Update(menuActionFinishedMsg{})
-	model = updated.(menuModel)
-
-	if model.done {
-		t.Fatal("menu should stay open after Copilot exits successfully")
-	}
-
-	if model.err != nil {
-		t.Fatalf("err = %v, want nil", model.err)
-	}
-
-	if cmd != nil {
-		t.Fatal("expected no command after Copilot succeeds")
-	}
-}
-
-func TestMenuReportsCopilotError(t *testing.T) {
-	model := newMenuModel(appMenuOptions())
-	wantErr := errors.New("boom")
-
-	updated, _ := model.Update(menuActionFinishedMsg{err: wantErr})
-	model = updated.(menuModel)
-
-	if !model.done {
-		t.Fatal("menu should be done after Copilot fails")
-	}
-
-	if !errors.Is(model.err, wantErr) {
-		t.Fatalf("err = %v, want wrapped %v", model.err, wantErr)
-	}
-}
-
-func selectMenuChoice(t *testing.T, model *menuModel, choice menuChoice) {
+func selectMenuOption(t *testing.T, model *menuModel, title string) {
 	t.Helper()
 
 	for index, item := range model.list.Items() {
 		menuOption, ok := item.(menuOption)
-		if ok && menuOption.choice == choice {
+		if ok && menuOption.title == title {
 			model.list.Select(index)
 			return
 		}
 	}
 
-	t.Fatalf("menu choice %q not found", choice)
+	t.Fatalf("menu option %q not found", title)
 }
