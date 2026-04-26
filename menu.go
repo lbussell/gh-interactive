@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os/exec"
 
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
@@ -11,6 +12,7 @@ type menuChoice string
 
 const (
 	menuChoiceLocal        menuChoice = "Local"
+	menuChoiceOpenCopilot  menuChoice = "Open Copilot"
 	menuChoicePullRequests menuChoice = "Pull Requests"
 	menuChoiceIssues       menuChoice = "Issues"
 )
@@ -36,7 +38,12 @@ func (i menuItem) FilterValue() string {
 type menuModel struct {
 	list     list.Model
 	selected menuChoice
+	err      error
 	done     bool
+}
+
+type copilotFinishedMsg struct {
+	err error
 }
 
 func newMenuModel() menuModel {
@@ -45,6 +52,11 @@ func newMenuModel() menuModel {
 			title:       string(menuChoiceLocal),
 			description: "Work with local repository state",
 			choice:      menuChoiceLocal,
+		},
+		menuItem{
+			title:       string(menuChoiceOpenCopilot),
+			description: "Launch GitHub Copilot CLI",
+			choice:      menuChoiceOpenCopilot,
 		},
 		menuItem{
 			title:       string(menuChoicePullRequests),
@@ -76,6 +88,9 @@ func runMenu() (menuChoice, bool, error) {
 	if !ok {
 		return "", false, fmt.Errorf("unexpected final menu model %T", finalModel)
 	}
+	if model.err != nil {
+		return "", false, model.err
+	}
 	if model.selected == "" {
 		return "", false, nil
 	}
@@ -87,10 +102,23 @@ func (m menuModel) Init() tea.Cmd {
 	return nil
 }
 
+func openCopilot() tea.Cmd {
+	return tea.ExecProcess(exec.Command("copilot"), func(err error) tea.Msg {
+		return copilotFinishedMsg{err: err}
+	})
+}
+
 func (m menuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.list.SetSize(msg.Width, msg.Height)
+	case copilotFinishedMsg:
+		if msg.err != nil {
+			m.err = fmt.Errorf("copilot failed: %w", msg.err)
+			m.done = true
+			return m, tea.Quit
+		}
+		return m, nil
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
@@ -98,6 +126,9 @@ func (m menuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "enter":
 			if item, ok := m.list.SelectedItem().(menuItem); ok {
+				if item.choice == menuChoiceOpenCopilot {
+					return m, openCopilot()
+				}
 				m.selected = item.choice
 			}
 			m.done = true
