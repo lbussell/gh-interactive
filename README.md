@@ -32,7 +32,7 @@ gh i
 
 ### Development
 
-To install dependencies:
+To install development dependencies:
 
 ```bash
 bun install

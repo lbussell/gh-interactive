@@ -5,6 +5,9 @@ node_modules
 out
 dist
 *.tgz
+*.bun-build
+/gh-interactive
+/gh-interactive.exe
 
 # code coverage
 coverage
