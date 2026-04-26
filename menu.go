@@ -54,11 +54,6 @@ func newMenuModel() menuModel {
 			choice:      menuChoiceLocal,
 		},
 		menuItem{
-			title:       string(menuChoiceOpenCopilot),
-			description: "Launch GitHub Copilot CLI",
-			choice:      menuChoiceOpenCopilot,
-		},
-		menuItem{
 			title:       string(menuChoicePullRequests),
 			description: "Browse and manage pull requests",
 			choice:      menuChoicePullRequests,
@@ -67,6 +62,11 @@ func newMenuModel() menuModel {
 			title:       string(menuChoiceIssues),
 			description: "Browse and manage issues",
 			choice:      menuChoiceIssues,
+		},
+		menuItem{
+			title:       string(menuChoiceOpenCopilot),
+			description: "Launch GitHub Copilot CLI",
+			choice:      menuChoiceOpenCopilot,
 		},
 	}
 
@@ -121,9 +121,6 @@ func (m menuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.KeyPressMsg:
 		switch msg.String() {
-		case "ctrl+c", "q", "esc":
-			m.done = true
-			return m, tea.Quit
 		case "enter":
 			if item, ok := m.list.SelectedItem().(menuItem); ok {
 				if item.choice == menuChoiceOpenCopilot {
