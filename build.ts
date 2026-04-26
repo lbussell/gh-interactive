@@ -43,8 +43,8 @@ async function buildExecutable(outfile: string, releaseTarget?: ReleaseTarget) {
   const result = await Bun.build({
     entrypoints: [entrypoint],
     compile: compileOptions,
+    // Do not enable bytecode: Ink's layout dependency uses top-level await, which Bun bytecode currently rejects.
     minify: true,
-    bytecode: true,
   });
 
   if (!result.success) {
