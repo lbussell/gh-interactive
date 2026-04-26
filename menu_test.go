@@ -8,7 +8,7 @@ import (
 )
 
 func TestMenuSelectsCurrentItem(t *testing.T) {
-	model := newMenuModel()
+	model := newMenuModel(appMenuOptions())
 
 	updated, _ := model.Update(tea.KeyPressMsg(tea.Key{Code: tea.KeyEnter}))
 	model = updated.(menuModel)
@@ -23,7 +23,7 @@ func TestMenuSelectsCurrentItem(t *testing.T) {
 }
 
 func TestMenuQuitDoesNotSelectItem(t *testing.T) {
-	model := newMenuModel()
+	model := newMenuModel(appMenuOptions())
 
 	updated, _ := model.Update(tea.KeyPressMsg(tea.Key{Code: 'q', Text: "q"}))
 	model = updated.(menuModel)
@@ -38,7 +38,7 @@ func TestMenuQuitDoesNotSelectItem(t *testing.T) {
 }
 
 func TestMenuOpenCopilotRunsCommand(t *testing.T) {
-	model := newMenuModel()
+	model := newMenuModel(appMenuOptions())
 	selectMenuChoice(t, &model, menuChoiceOpenCopilot)
 
 	updated, cmd := model.Update(tea.KeyPressMsg(tea.Key{Code: tea.KeyEnter}))
@@ -58,9 +58,9 @@ func TestMenuOpenCopilotRunsCommand(t *testing.T) {
 }
 
 func TestMenuReturnsAfterCopilotSucceeds(t *testing.T) {
-	model := newMenuModel()
+	model := newMenuModel(appMenuOptions())
 
-	updated, cmd := model.Update(copilotFinishedMsg{})
+	updated, cmd := model.Update(menuActionFinishedMsg{})
 	model = updated.(menuModel)
 
 	if model.done {
@@ -77,10 +77,10 @@ func TestMenuReturnsAfterCopilotSucceeds(t *testing.T) {
 }
 
 func TestMenuReportsCopilotError(t *testing.T) {
-	model := newMenuModel()
+	model := newMenuModel(appMenuOptions())
 	wantErr := errors.New("boom")
 
-	updated, _ := model.Update(copilotFinishedMsg{err: wantErr})
+	updated, _ := model.Update(menuActionFinishedMsg{err: wantErr})
 	model = updated.(menuModel)
 
 	if !model.done {
@@ -96,8 +96,8 @@ func selectMenuChoice(t *testing.T, model *menuModel, choice menuChoice) {
 	t.Helper()
 
 	for index, item := range model.list.Items() {
-		menuItem, ok := item.(menuItem)
-		if ok && menuItem.choice == choice {
+		menuOption, ok := item.(menuOption)
+		if ok && menuOption.choice == choice {
 			model.list.Select(index)
 			return
 		}

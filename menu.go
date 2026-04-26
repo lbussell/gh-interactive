@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os/exec"
 
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
@@ -10,28 +9,22 @@ import (
 
 type menuChoice string
 
-const (
-	menuChoiceLocal        menuChoice = "Local"
-	menuChoiceOpenCopilot  menuChoice = "Open Copilot"
-	menuChoicePullRequests menuChoice = "Pull Requests"
-	menuChoiceIssues       menuChoice = "Issues"
-)
-
-type menuItem struct {
+type menuOption struct {
 	title       string
 	description string
 	choice      menuChoice
+	action      func() tea.Cmd
 }
 
-func (i menuItem) Title() string {
+func (i menuOption) Title() string {
 	return i.title
 }
 
-func (i menuItem) Description() string {
+func (i menuOption) Description() string {
 	return i.description
 }
 
-func (i menuItem) FilterValue() string {
+func (i menuOption) FilterValue() string {
 	return i.title
 }
 
@@ -42,32 +35,14 @@ type menuModel struct {
 	done     bool
 }
 
-type copilotFinishedMsg struct {
+type menuActionFinishedMsg struct {
 	err error
 }
 
-func newMenuModel() menuModel {
-	items := []list.Item{
-		menuItem{
-			title:       string(menuChoiceLocal),
-			description: "Work with local repository state",
-			choice:      menuChoiceLocal,
-		},
-		menuItem{
-			title:       string(menuChoicePullRequests),
-			description: "Browse and manage pull requests",
-			choice:      menuChoicePullRequests,
-		},
-		menuItem{
-			title:       string(menuChoiceIssues),
-			description: "Browse and manage issues",
-			choice:      menuChoiceIssues,
-		},
-		menuItem{
-			title:       string(menuChoiceOpenCopilot),
-			description: "Launch GitHub Copilot CLI",
-			choice:      menuChoiceOpenCopilot,
-		},
+func newMenuModel(options []menuOption) menuModel {
+	items := make([]list.Item, 0, len(options))
+	for _, option := range options {
+		items = append(items, option)
 	}
 
 	menuList := list.New(items, list.NewDefaultDelegate(), 80, 14)
@@ -78,8 +53,8 @@ func newMenuModel() menuModel {
 	return menuModel{list: menuList}
 }
 
-func runMenu() (menuChoice, bool, error) {
-	finalModel, err := tea.NewProgram(newMenuModel()).Run()
+func runMenu(options []menuOption) (menuChoice, bool, error) {
+	finalModel, err := tea.NewProgram(newMenuModel(options)).Run()
 	if err != nil {
 		return "", false, err
 	}
@@ -102,19 +77,13 @@ func (m menuModel) Init() tea.Cmd {
 	return nil
 }
 
-func openCopilot() tea.Cmd {
-	return tea.ExecProcess(exec.Command("copilot"), func(err error) tea.Msg {
-		return copilotFinishedMsg{err: err}
-	})
-}
-
 func (m menuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.list.SetSize(msg.Width, msg.Height)
-	case copilotFinishedMsg:
+	case menuActionFinishedMsg:
 		if msg.err != nil {
-			m.err = fmt.Errorf("copilot failed: %w", msg.err)
+			m.err = msg.err
 			m.done = true
 			return m, tea.Quit
 		}
@@ -125,9 +94,9 @@ func (m menuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.done = true
 			return m, tea.Quit
 		case "enter":
-			if item, ok := m.list.SelectedItem().(menuItem); ok {
-				if item.choice == menuChoiceOpenCopilot {
-					return m, openCopilot()
+			if item, ok := m.list.SelectedItem().(menuOption); ok {
+				if item.action != nil {
+					return m, item.action()
 				}
 				m.selected = item.choice
 			}
