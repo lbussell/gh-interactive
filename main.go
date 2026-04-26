@@ -13,6 +13,13 @@ func main() {
 	}
 
 	if selected {
-		fmt.Printf("Selected %s\n", choice)
+		confirmed, err := confirmChoice(choice)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to confirm selection: %v\n", err)
+			os.Exit(1)
+		}
+		if confirmed {
+			fmt.Printf("Selected %s\n", choice)
+		}
 	}
 }

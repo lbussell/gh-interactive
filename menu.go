@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
 )
 
 type menuChoice string
@@ -91,7 +91,7 @@ func (m menuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.list.SetSize(msg.Width, msg.Height)
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
 			m.done = true
@@ -110,10 +110,10 @@ func (m menuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m menuModel) View() string {
+func (m menuModel) View() tea.View {
 	if m.done {
-		return ""
+		return tea.NewView("")
 	}
 
-	return m.list.View()
+	return tea.NewView(m.list.View())
 }
