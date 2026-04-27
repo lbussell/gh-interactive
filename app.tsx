@@ -1,6 +1,6 @@
 import { Spinner } from "@inkjs/ui";
 import { Text, useApp, useInput } from "ink";
-import { getBranches } from "./branches";
+import { getLocalBranches } from "./branches";
 import { useAsync } from "./hooks";
 import { Select } from "./select";
 
@@ -9,7 +9,7 @@ const getErrorMessage = (error: unknown) =>
 
 export const App = () => {
 	const { exit } = useApp();
-	const branches = useAsync(getBranches);
+	const branches = useAsync(getLocalBranches);
 
 	useInput(
 		(input, key) => {
@@ -25,11 +25,7 @@ export const App = () => {
 	}
 
 	if (branches.status === "error") {
-		return (
-			<Text>
-				Error: {getErrorMessage(branches.error)}.
-			</Text>
-		);
+		return <Text>Error: {getErrorMessage(branches.error)}.</Text>;
 	}
 
 	return (

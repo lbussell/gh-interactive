@@ -1,8 +1,6 @@
-export async function getBranches(_signal: AbortSignal) {
-	const output = await Bun.$`git branch --format='%(refname:short)'`.text();
+import simpleGit from "simple-git";
 
-	return output
-		.split("\n")
-		.map((branch) => branch.trim())
-		.filter((branch) => branch.length > 0);
+export async function getLocalBranches(_signal: AbortSignal) {
+	const branches = await simpleGit().branchLocal();
+	return branches.all;
 }
