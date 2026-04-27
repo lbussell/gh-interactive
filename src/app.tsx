@@ -25,7 +25,7 @@ export const App = () => {
 	const worktrees = useAsyncCached(fetchWorktrees, worktreesCachePath);
 
 	useShortcuts([
-		{ id: "quit", keys: ["q"], label: "q quit", action: () => exit() },
+		{ id: "quit", keys: ["q"], label: "q/ctrl+c quit", action: () => exit() },
 	]);
 
 	return (
