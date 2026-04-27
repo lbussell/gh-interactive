@@ -41,11 +41,14 @@ export const App = () => {
 			<Box flexDirection="column" marginBottom={1}>
 				<Text dimColor>Worktrees:</Text>
 				{worktrees.data.map((worktree) => (
-					<Text key={worktree}> {worktree}</Text>
+					<Text key={worktree.path}>
+						{" "}
+						{worktree.path} ({worktree.branch ?? "detached"})
+					</Text>
 				))}
 			</Box>
 			<Select
-				items={branches.data}
+				items={branches.data.map((b) => b.name)}
 				label="Choose a branch."
 				emptyMessage="No local git branches found."
 				onSelect={(branch) => exit(branch)}
