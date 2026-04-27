@@ -1,0 +1,26 @@
+{
+	"name": "gh-interactive",
+	"module": "index.tsx",
+	"type": "module",
+	"private": true,
+	"devDependencies": {
+		"@biomejs/biome": "2.4.13",
+		"@types/bun": "latest",
+		"@types/react": "^19.2.14",
+		"react-devtools-core": "^7.0.1"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"@inkjs/ui": "^2.0.0",
+		"ink": "^7.0.1",
+		"react": "^19.2.5",
+		"simple-git": "^3.36.0"
+	},
+	"scripts": {
+		"check": "biome check --colors=off --write .",
+		"build": "bun run check && bun run build.ts",
+		"build-install": "bun run check && bun run build.ts --install"
+	}
+}
