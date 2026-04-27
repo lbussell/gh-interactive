@@ -6,8 +6,7 @@ type SelectProps<T> = {
 	items: T[];
 	keyOf: (item: T) => string;
 	renderItem: (item: T, selected: boolean) => ReactNode;
-	label?: string;
-	emptyMessage?: string;
+	renderEmpty?: () => ReactNode;
 	selector?: string;
 	onSelect: (item: T) => void;
 	onCancel: () => void;
@@ -17,8 +16,7 @@ export function Select<T>({
 	items,
 	keyOf,
 	renderItem,
-	label,
-	emptyMessage,
+	renderEmpty,
 	selector = ">",
 	onSelect,
 	onCancel,
@@ -82,12 +80,11 @@ export function Select<T>({
 	const padding = " ".repeat(selector.length + 1);
 
 	if (items.length === 0) {
-		return <Text>{emptyMessage}</Text>;
+		return <>{renderEmpty?.()}</>;
 	}
 
 	return (
 		<Box flexDirection="column">
-			{label && <Text dimColor>{label}</Text>}
 			{items.map((item, index) => {
 				const selected = index === selectedIndex;
 

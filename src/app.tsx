@@ -56,14 +56,14 @@ export const App = () => {
 					</Text>
 				))}
 			</Box>
+			<Text dimColor>Choose a branch.</Text>
 			<Select
 				items={branches.data}
 				keyOf={(b) => b.name}
 				renderItem={(branch, selected) => (
 					<BranchView branch={branch} selected={selected} />
 				)}
-				label="Choose a branch."
-				emptyMessage="No local git branches found."
+				renderEmpty={() => <Text>No local git branches found.</Text>}
 				onSelect={(branch) => exit(branch.name)}
 				onCancel={() => exit()}
 			/>
