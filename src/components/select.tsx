@@ -156,31 +156,31 @@ export function Select<T>({
 	}
 
 	const visibleCount = countVisible(scrollOffset, budget);
-	const visibleItems = items.slice(scrollOffset, scrollOffset + visibleCount);
+	const hasMore = scrollOffset + visibleCount < items.length;
+	// Render one extra item beyond what fits — it'll be clipped by overflow
+	const renderCount = hasMore ? visibleCount + 1 : visibleCount;
+	const visibleItems = items.slice(scrollOffset, scrollOffset + renderCount);
 	const hiddenAbove = scrollOffset;
 	const hiddenBelow = Math.max(0, items.length - scrollOffset - visibleCount);
 
 	return (
-		<Box
-			ref={containerRef}
-			flexDirection="column"
-			flexGrow={1}
-			overflowY="hidden"
-		>
+		<Box ref={containerRef} flexDirection="column" flexGrow={1}>
 			<Text dimColor>
 				{hiddenAbove > 0 ? `${padding}↑ ${hiddenAbove} more` : " "}
 			</Text>
-			{visibleItems.map((item, visibleIndex) => {
-				const actualIndex = visibleIndex + scrollOffset;
-				const selected = actualIndex === selectedIndex;
+			<Box flexDirection="column" flexGrow={1} overflowY="hidden">
+				{visibleItems.map((item, visibleIndex) => {
+					const actualIndex = visibleIndex + scrollOffset;
+					const selected = actualIndex === selectedIndex;
 
-				return (
-					<Box key={keyOf(item)} flexDirection="row">
-						<Text>{selected ? `${selector} ` : padding}</Text>
-						<Box>{renderItem(item, selected)}</Box>
-					</Box>
-				);
-			})}
+					return (
+						<Box key={keyOf(item)} flexDirection="row">
+							<Text>{selected ? `${selector} ` : padding}</Text>
+							<Box>{renderItem(item, selected)}</Box>
+						</Box>
+					);
+				})}
+			</Box>
 			<Text dimColor>
 				{hiddenBelow > 0 ? `${padding}↓ ${hiddenBelow} more` : " "}
 			</Text>
