@@ -26,7 +26,6 @@ export function BranchesView({ branches }: BranchesViewProps) {
 
 	return (
 		<>
-			<Text dimColor>Choose a branch.</Text>
 			<Select
 				items={branches.data}
 				keyOf={(b) => b.name}

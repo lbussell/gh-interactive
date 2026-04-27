@@ -28,7 +28,6 @@ export function WorktreesView({ worktrees, worktreePRs }: WorktreesViewProps) {
 
 	return (
 		<>
-			<Text dimColor>Choose a worktree.</Text>
 			<Select
 				items={worktrees.data}
 				keyOf={(w) => w.path}

@@ -26,7 +26,6 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 
 	return (
 		<>
-			<Text dimColor>Choose a pull request.</Text>
 			<Select
 				items={pullRequests.data}
 				keyOf={(pr) => String(pr.number)}
