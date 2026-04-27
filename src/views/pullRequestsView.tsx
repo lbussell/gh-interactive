@@ -29,7 +29,6 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 			<Select
 				items={pullRequests.data}
 				keyOf={(pr) => String(pr.number)}
-				maxVisible={5}
 				renderItem={(pr, selected) => (
 					<PullRequestView pullRequest={pr} selected={selected} />
 				)}

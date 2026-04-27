@@ -1,6 +1,11 @@
-import { Box, Text } from "ink";
-import type { ReactNode } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Box, type DOMElement, Text, useBoxMetrics } from "ink";
+import React, {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { useShortcuts } from "../context/shortcutContext";
 
 type SelectProps<T> = {
@@ -9,7 +14,7 @@ type SelectProps<T> = {
 	renderItem: (item: T, selected: boolean) => ReactNode;
 	renderEmpty?: () => ReactNode;
 	selector?: string;
-	maxVisible?: number;
+	itemHeight?: number;
 	onSelect: (item: T) => void;
 };
 
@@ -19,9 +24,20 @@ export function Select<T>({
 	renderItem,
 	renderEmpty,
 	selector = ">",
-	maxVisible,
+	itemHeight = 2,
 	onSelect,
 }: SelectProps<T>) {
+	const containerRef = useRef<DOMElement | null>(
+		null,
+	) as unknown as React.RefObject<DOMElement>;
+	const { height, hasMeasured } = useBoxMetrics(containerRef);
+
+	// Reserve 2 lines for scroll indicators (top + bottom)
+	const indicatorLines = 2;
+	const maxVisible = hasMeasured
+		? Math.max(1, Math.floor((height - indicatorLines) / itemHeight))
+		: 5;
+
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [scrollOffset, setScrollOffset] = useState(0);
 	const selectedIndexRef = useRef(0);
@@ -31,7 +47,7 @@ export function Select<T>({
 			selectedIndexRef.current = nextIndex;
 			setSelectedIndex(nextIndex);
 
-			if (maxVisible === undefined || items.length <= maxVisible) {
+			if (items.length <= maxVisible) {
 				return;
 			}
 
@@ -113,26 +129,25 @@ export function Select<T>({
 		return <>{renderEmpty?.()}</>;
 	}
 
-	const shouldScroll = maxVisible !== undefined && items.length > maxVisible;
-	const visibleItems = shouldScroll
-		? items.slice(scrollOffset, scrollOffset + maxVisible)
-		: items;
-	const hiddenAbove = shouldScroll ? scrollOffset : 0;
+	const shouldScroll = items.length > maxVisible;
+	const visibleItems = items.slice(scrollOffset, scrollOffset + maxVisible);
+	const hiddenAbove = scrollOffset;
 	const hiddenBelow = shouldScroll
-		? items.length - scrollOffset - maxVisible
+		? Math.max(0, items.length - scrollOffset - maxVisible)
 		: 0;
 
 	return (
-		<Box flexDirection="column">
-			{shouldScroll && (
-				<Text dimColor>
-					{hiddenAbove > 0 ? `${padding}↑ ${hiddenAbove} more` : " "}
-				</Text>
-			)}
+		<Box
+			ref={containerRef}
+			flexDirection="column"
+			flexGrow={1}
+			overflowY="hidden"
+		>
+			<Text dimColor>
+				{hiddenAbove > 0 ? `${padding}↑ ${hiddenAbove} more` : " "}
+			</Text>
 			{visibleItems.map((item, visibleIndex) => {
-				const actualIndex = shouldScroll
-					? visibleIndex + scrollOffset
-					: visibleIndex;
+				const actualIndex = visibleIndex + scrollOffset;
 				const selected = actualIndex === selectedIndex;
 
 				return (
@@ -142,11 +157,9 @@ export function Select<T>({
 					</Box>
 				);
 			})}
-			{shouldScroll && (
-				<Text dimColor>
-					{hiddenBelow > 0 ? `${padding}↓ ${hiddenBelow} more` : " "}
-				</Text>
-			)}
+			<Text dimColor>
+				{hiddenBelow > 0 ? `${padding}↓ ${hiddenBelow} more` : " "}
+			</Text>
 		</Box>
 	);
 }

@@ -21,9 +21,10 @@ export function TabContent({ children }: TabContentProps) {
 
 type TabsProps = {
 	children: ReactNode;
+	height?: number;
 };
 
-export function Tabs({ children }: TabsProps) {
+export function Tabs({ children, height }: TabsProps) {
 	const tabs = Children.toArray(children) as ReactElement<TabContentProps>[];
 	const [activeIndex, setActiveIndex] = useState(0);
 
@@ -57,7 +58,9 @@ export function Tabs({ children }: TabsProps) {
 				tabs={tabs.map((t) => ({ id: t.props.id, label: t.props.label }))}
 				activeId={activeTab.props.id}
 			/>
-			{activeTab}
+			<Box flexDirection="column" height={height}>
+				{activeTab}
+			</Box>
 		</Box>
 	);
 }

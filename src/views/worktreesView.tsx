@@ -31,7 +31,6 @@ export function WorktreesView({ worktrees, worktreePRs }: WorktreesViewProps) {
 			<Select
 				items={worktrees.data}
 				keyOf={(w) => w.path}
-				maxVisible={5}
 				renderItem={(worktree, selected) => {
 					const branch = worktree.branch;
 					const prs = branch ? (worktreePRs[branch] ?? null) : null;
