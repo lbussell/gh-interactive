@@ -25,6 +25,7 @@ export async function getRepoName(git: SimpleGit): Promise<string> {
 
 export async function getLocalBranches(git: SimpleGit): Promise<Branch[]> {
 	const result = await git.branchLocal();
+    // Artificial delay to test caching 
 	await delay(2000);
 	return result.all.flatMap((name) => {
 		const branch = result.branches[name];
