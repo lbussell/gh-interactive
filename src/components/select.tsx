@@ -1,21 +1,28 @@
 import { Box, Text, useInput } from "ink";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type SelectProps = {
-	items: string[];
-	label: string;
-	emptyMessage: string;
-	onSelect: (item: string) => void;
+type SelectProps<T> = {
+	items: T[];
+	keyOf: (item: T) => string;
+	renderItem: (item: T, selected: boolean) => ReactNode;
+	label?: string;
+	emptyMessage?: string;
+	selector?: string;
+	onSelect: (item: T) => void;
 	onCancel: () => void;
 };
 
-export function Select({
+export function Select<T>({
 	items,
+	keyOf,
+	renderItem,
 	label,
 	emptyMessage,
+	selector = ">",
 	onSelect,
 	onCancel,
-}: SelectProps) {
+}: SelectProps<T>) {
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const selectedIndexRef = useRef(0);
 
@@ -72,21 +79,23 @@ export function Select({
 		}
 	});
 
+	const padding = " ".repeat(selector.length + 1);
+
 	if (items.length === 0) {
 		return <Text>{emptyMessage}</Text>;
 	}
 
 	return (
 		<Box flexDirection="column">
-			<Text dimColor>{label}</Text>
+			{label && <Text dimColor>{label}</Text>}
 			{items.map((item, index) => {
 				const selected = index === selectedIndex;
 
 				return (
-					<Text key={item} color={selected ? "green" : undefined}>
-						{selected ? "> " : "  "}
-						{item}
-					</Text>
+					<Box key={keyOf(item)} flexDirection="row">
+						<Text>{selected ? `${selector} ` : padding}</Text>
+						<Box>{renderItem(item, selected)}</Box>
+					</Box>
 				);
 			})}
 		</Box>

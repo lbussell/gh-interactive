@@ -1,6 +1,7 @@
 import { Spinner } from "@inkjs/ui";
 import { Box, Text, useApp, useInput } from "ink";
 import { useCallback } from "react";
+import { BranchView } from "./components/branchView";
 import { Select } from "./components/select";
 import { useConfig } from "./context/configContext";
 import { useGit } from "./context/gitContext";
@@ -56,10 +57,14 @@ export const App = () => {
 				))}
 			</Box>
 			<Select
-				items={branches.data.map((b) => b.name)}
+				items={branches.data}
+				keyOf={(b) => b.name}
+				renderItem={(branch, selected) => (
+					<BranchView branch={branch} selected={selected} />
+				)}
 				label="Choose a branch."
 				emptyMessage="No local git branches found."
-				onSelect={(branch) => exit(branch)}
+				onSelect={(branch) => exit(branch.name)}
 				onCancel={() => exit()}
 			/>
 		</Box>
