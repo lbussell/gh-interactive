@@ -1,21 +1,14 @@
-import { join } from "node:path";
 import { Spinner } from "@inkjs/ui";
 import { Box, Text } from "ink";
-import { useCallback } from "react";
 import { WorktreeView } from "../components/worktreeView";
-import { useCacheDir } from "../context/cacheContext";
-import { useGit } from "../context/gitContext";
-import { getWorktrees } from "../git";
-import { useAsyncCached } from "../hooks";
+import type { Worktree } from "../git";
+import type { CachedAsyncState } from "../hooks";
 
-export function WorktreesView() {
-	const git = useGit();
-	const cacheDir = useCacheDir();
+type WorktreesViewProps = {
+	worktrees: CachedAsyncState<Worktree[]>;
+};
 
-	const worktreesCachePath = join(cacheDir, "worktrees.cache.json");
-	const fetchWorktrees = useCallback(() => getWorktrees(git), [git]);
-	const worktrees = useAsyncCached(fetchWorktrees, worktreesCachePath);
-
+export function WorktreesView({ worktrees }: WorktreesViewProps) {
 	if (worktrees.status === "loading") {
 		return <Spinner label="Loading worktrees..." />;
 	}

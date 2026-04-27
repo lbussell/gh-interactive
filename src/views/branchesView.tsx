@@ -1,22 +1,16 @@
-import { join } from "node:path";
 import { Spinner } from "@inkjs/ui";
 import { Text, useApp } from "ink";
-import { useCallback } from "react";
 import { BranchView } from "../components/branchView";
 import { Select } from "../components/select";
-import { useCacheDir } from "../context/cacheContext";
-import { useGit } from "../context/gitContext";
-import { getLocalBranches } from "../git";
-import { useAsyncCached } from "../hooks";
+import type { Branch } from "../git";
+import type { CachedAsyncState } from "../hooks";
 
-export function BranchesView() {
+type BranchesViewProps = {
+	branches: CachedAsyncState<Branch[]>;
+};
+
+export function BranchesView({ branches }: BranchesViewProps) {
 	const { exit } = useApp();
-	const git = useGit();
-	const cacheDir = useCacheDir();
-
-	const branchesCachePath = join(cacheDir, "branches.cache.json");
-	const fetchBranches = useCallback(() => getLocalBranches(git), [git]);
-	const branches = useAsyncCached(fetchBranches, branchesCachePath);
 
 	if (branches.status === "loading") {
 		return <Spinner label="Loading branches..." />;
