@@ -11,6 +11,13 @@ export type PullRequest = {
 	updatedAt: string;
 };
 
+export type WorktreePullRequest = {
+	number: number;
+	title: string;
+	state: "open" | "closed" | "merged";
+	draft: boolean;
+};
+
 export async function createOctokit(): Promise<Octokit> {
 	const result = Bun.spawnSync(["gh", "auth", "token"]);
 	const token = result.stdout.toString().trim();
@@ -55,4 +62,28 @@ export async function getPullRequests(
 			updatedAt: pr.updated_at,
 		};
 	});
+}
+
+export async function getPullRequestsForBranch(
+	octokit: Octokit,
+	owner: string,
+	repo: string,
+	branch: string,
+): Promise<WorktreePullRequest[]> {
+	const { data } = await octokit.rest.pulls.list({
+		owner,
+		repo,
+		head: `${owner}:${branch}`,
+		state: "all",
+		sort: "updated",
+		direction: "desc",
+		per_page: 5,
+	});
+
+	return data.map((pr) => ({
+		number: pr.number,
+		title: pr.title,
+		state: pr.merged_at ? "merged" : pr.state === "closed" ? "closed" : "open",
+		draft: pr.draft ?? false,
+	}));
 }
