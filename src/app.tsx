@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { Box, useApp } from "ink";
 import { useCallback } from "react";
 import { ShortcutFooter } from "./components/shortcutFooter";
-import { Tabs } from "./components/tabs";
+import { TabContent, Tabs } from "./components/tabs";
 import { useCacheDir } from "./context/cacheContext";
 import { useGit } from "./context/gitContext";
 import { useShortcuts } from "./context/shortcutContext";
@@ -30,20 +30,14 @@ export const App = () => {
 
 	return (
 		<Box flexDirection="column">
-			<Tabs
-				tabs={[
-					{
-						id: "branches",
-						label: "Branches",
-						content: <BranchesView branches={branches} />,
-					},
-					{
-						id: "worktrees",
-						label: "Worktrees",
-						content: <WorktreesView worktrees={worktrees} />,
-					},
-				]}
-			/>
+			<Tabs>
+				<TabContent id="branches" label="Branches">
+					<BranchesView branches={branches} />
+				</TabContent>
+				<TabContent id="worktrees" label="Worktrees">
+					<WorktreesView worktrees={worktrees} />
+				</TabContent>
+			</Tabs>
 			<ShortcutFooter />
 		</Box>
 	);

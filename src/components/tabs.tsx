@@ -1,19 +1,30 @@
 import { Box } from "ink";
-import { type ReactNode, useCallback, useState } from "react";
+import {
+	Children,
+	type ReactElement,
+	type ReactNode,
+	useCallback,
+	useState,
+} from "react";
 import { useShortcuts } from "../context/shortcutContext";
 import { TabBar } from "./tabBar";
 
-type TabDefinition = {
+type TabContentProps = {
 	id: string;
 	label: string;
-	content: ReactNode;
+	children: ReactNode;
 };
+
+export function TabContent({ children }: TabContentProps) {
+	return <>{children}</>;
+}
 
 type TabsProps = {
-	tabs: TabDefinition[];
+	children: ReactNode;
 };
 
-export function Tabs({ tabs }: TabsProps) {
+export function Tabs({ children }: TabsProps) {
+	const tabs = Children.toArray(children) as ReactElement<TabContentProps>[];
 	const [activeIndex, setActiveIndex] = useState(0);
 
 	const prevTab = useCallback(
@@ -43,10 +54,10 @@ export function Tabs({ tabs }: TabsProps) {
 	return (
 		<Box flexDirection="column">
 			<TabBar
-				tabs={tabs.map((t) => ({ id: t.id, label: t.label }))}
-				activeId={activeTab.id}
+				tabs={tabs.map((t) => ({ id: t.props.id, label: t.props.label }))}
+				activeId={activeTab.props.id}
 			/>
-			{activeTab.content}
+			{activeTab}
 		</Box>
 	);
 }
