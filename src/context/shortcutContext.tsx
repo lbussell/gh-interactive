@@ -11,10 +11,9 @@ import {
 export type Shortcut = {
 	id: string;
 	keys: string[];
-	label: string;
+	label?: string;
 	action: () => void;
 	priority?: number;
-	hidden?: boolean;
 };
 
 type ShortcutContextType = {
@@ -123,7 +122,6 @@ export function useShortcut(shortcut: Shortcut, enabled = true) {
 			label: shortcut.label,
 			action: () => actionRef.current(),
 			priority: shortcut.priority,
-			hidden: shortcut.hidden,
 		});
 	}, [
 		enabled,
@@ -131,7 +129,6 @@ export function useShortcut(shortcut: Shortcut, enabled = true) {
 		shortcut.id,
 		shortcut.label,
 		shortcut.priority,
-		shortcut.hidden,
 		keysKey,
 	]);
 }

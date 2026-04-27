@@ -87,13 +87,7 @@ export function Select<T>({
 
 	const hasItems = items.length > 0;
 	useShortcut(
-		{
-			id: "select-up-arrow",
-			keys: ["<up>"],
-			label: "↑/↓/j/k scroll",
-			action: moveUp,
-			hidden: true,
-		},
+		{ id: "select-up-arrow", keys: ["<up>"], action: moveUp },
 		hasItems,
 	);
 	useShortcut(
@@ -106,25 +100,10 @@ export function Select<T>({
 		hasItems,
 	);
 	useShortcut(
-		{
-			id: "select-down-arrow",
-			keys: ["<down>"],
-			label: "↑/↓/j/k scroll",
-			action: moveDown,
-			hidden: true,
-		},
+		{ id: "select-down-arrow", keys: ["<down>"], action: moveDown },
 		hasItems,
 	);
-	useShortcut(
-		{
-			id: "select-down-j",
-			keys: ["j"],
-			label: "↑/↓/j/k scroll",
-			action: moveDown,
-			hidden: true,
-		},
-		hasItems,
-	);
+	useShortcut({ id: "select-down-j", keys: ["j"], action: moveDown }, hasItems);
 	useShortcut(
 		{
 			id: "select-enter",

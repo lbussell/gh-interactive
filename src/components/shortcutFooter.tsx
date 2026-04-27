@@ -4,13 +4,12 @@ import { useShortcuts } from "../context/shortcutContext";
 export function ShortcutFooter() {
 	const { shortcuts, buffer } = useShortcuts();
 
-	const nonHidden = shortcuts.filter((s) => !s.hidden);
-
 	const visible =
 		buffer.length === 0
-			? nonHidden
-			: nonHidden.filter(
+			? shortcuts.filter((s) => s.label)
+			: shortcuts.filter(
 					(s) =>
+						s.label &&
 						s.keys.length > buffer.length &&
 						buffer.every((k, i) => s.keys[i] === k),
 				);

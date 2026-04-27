@@ -25,27 +25,9 @@ export function Tabs({ tabs }: TabsProps) {
 		[tabs.length],
 	);
 
-	useShortcut({
-		id: "tab-prev-arrow",
-		keys: ["<left>"],
-		label: "←/→/h/l switch tabs",
-		action: prevTab,
-		hidden: true,
-	});
-	useShortcut({
-		id: "tab-prev-h",
-		keys: ["h"],
-		label: "←/→/h/l switch tabs",
-		action: prevTab,
-		hidden: true,
-	});
-	useShortcut({
-		id: "tab-next-arrow",
-		keys: ["<right>"],
-		label: "←/→/h/l switch tabs",
-		action: nextTab,
-		hidden: true,
-	});
+	useShortcut({ id: "tab-prev-arrow", keys: ["<left>"], action: prevTab });
+	useShortcut({ id: "tab-prev-h", keys: ["h"], action: prevTab });
+	useShortcut({ id: "tab-next-arrow", keys: ["<right>"], action: nextTab });
 	useShortcut({
 		id: "tab-next-l",
 		keys: ["l"],
