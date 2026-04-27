@@ -1,7 +1,7 @@
 import { Spinner } from "@inkjs/ui";
 import { Box, Text, useApp, useInput } from "ink";
-import { getLocalBranches } from "./branches";
 import { useConfig } from "./config-context";
+import { getLocalBranches, getWorktrees } from "./git";
 import { useAsync } from "./hooks";
 import { Select } from "./select";
 
@@ -12,6 +12,7 @@ export const App = () => {
 	const { exit } = useApp();
 	const config = useConfig();
 	const branches = useAsync(getLocalBranches);
+	const worktrees = useAsync(getWorktrees);
 
 	useInput(
 		(input, key) => {
@@ -22,17 +23,27 @@ export const App = () => {
 		{ isActive: branches.status !== "done" },
 	);
 
-	if (branches.status === "loading") {
-		return <Spinner label="Loading branches" />;
+	if (branches.status === "loading" || worktrees.status === "loading") {
+		return <Spinner label="Loading..." />;
 	}
 
 	if (branches.status === "error") {
 		return <Text>Error: {getErrorMessage(branches.error)}.</Text>;
 	}
 
+	if (worktrees.status === "error") {
+		return <Text>Error: {getErrorMessage(worktrees.error)}.</Text>;
+	}
+
 	return (
 		<Box flexDirection="column">
 			<Text>Worktree directory: {config.worktreeDirectory}</Text>
+			<Box flexDirection="column" marginBottom={1}>
+				<Text dimColor>Worktrees:</Text>
+				{worktrees.data.map((worktree) => (
+					<Text key={worktree}> {worktree}</Text>
+				))}
+			</Box>
 			<Select
 				items={branches.data}
 				label="Choose a branch."
