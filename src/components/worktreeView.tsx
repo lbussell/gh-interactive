@@ -27,7 +27,7 @@ export function WorktreeView({
 	pullRequests,
 }: WorktreeViewProps) {
 	const color = selected ? "green" : undefined;
-	const branch = worktree.branch?.replace("refs/heads/", "") ?? null;
+	const branch = worktree.branch;
 	const status = worktree.bare
 		? "bare"
 		: worktree.detached

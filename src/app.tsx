@@ -37,7 +37,7 @@ export const App = () => {
 	const worktreeBranches = useMemo(() => {
 		if (worktrees.status !== "done") return [];
 		return worktrees.data
-			.map((w) => w.branch?.replace("refs/heads/", "") ?? null)
+			.map((w) => w.branch)
 			.filter((b): b is string => b !== null);
 	}, [worktrees.status, worktrees.data]);
 

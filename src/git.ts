@@ -60,7 +60,7 @@ function parseWorktrees(output: string): Worktree[] {
 				} else if (line.startsWith("HEAD ")) {
 					worktree.head = line.slice("HEAD ".length);
 				} else if (line.startsWith("branch ")) {
-					worktree.branch = line.slice("branch ".length);
+					worktree.branch = line.slice("branch refs/heads/".length);
 				} else if (line === "bare") {
 					worktree.bare = true;
 				} else if (line === "detached") {
