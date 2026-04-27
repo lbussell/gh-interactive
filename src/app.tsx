@@ -8,7 +8,12 @@ import { WorktreesView } from "./views/worktreesView";
 export const App = () => {
 	const { exit } = useApp();
 
-	useShortcut({ id: "quit", keys: ["q"], label: "quit", action: () => exit() });
+	useShortcut({
+		id: "quit",
+		keys: ["q"],
+		label: "q quit",
+		action: () => exit(),
+	});
 
 	return (
 		<Box flexDirection="column">

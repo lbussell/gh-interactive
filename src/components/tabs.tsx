@@ -28,27 +28,28 @@ export function Tabs({ tabs }: TabsProps) {
 	useShortcut({
 		id: "tab-prev-arrow",
 		keys: ["<left>"],
-		label: "prev tab",
+		label: "←/→/h/l switch tabs",
 		action: prevTab,
 		hidden: true,
 	});
 	useShortcut({
 		id: "tab-prev-h",
 		keys: ["h"],
-		label: "prev tab",
+		label: "←/→/h/l switch tabs",
 		action: prevTab,
+		hidden: true,
 	});
 	useShortcut({
 		id: "tab-next-arrow",
 		keys: ["<right>"],
-		label: "next tab",
+		label: "←/→/h/l switch tabs",
 		action: nextTab,
 		hidden: true,
 	});
 	useShortcut({
 		id: "tab-next-l",
 		keys: ["l"],
-		label: "next tab",
+		label: "←/→/h/l switch tabs",
 		action: nextTab,
 	});
 

@@ -8,16 +8,7 @@ export function ShortcutFooter() {
 
 	const visible =
 		buffer.length === 0
-			? nonHidden.filter(
-					(s) =>
-						s.keys.length === 1 ||
-						!nonHidden.some(
-							(other) =>
-								other.id !== s.id &&
-								other.keys[0] === s.keys[0] &&
-								other.keys.length > s.keys.length,
-						),
-				)
+			? nonHidden
 			: nonHidden.filter(
 					(s) =>
 						s.keys.length > buffer.length &&
@@ -38,29 +29,12 @@ export function ShortcutFooter() {
 					<Text dimColor>{" → "}</Text>
 				</Text>
 			)}
-			{sorted.map((s, i) => {
-				const displayKeys = s.keys.slice(buffer.length).join(" ");
-				const isLeader =
-					buffer.length === 0 &&
-					nonHidden.some(
-						(other) =>
-							other.id !== s.id &&
-							other.keys.length > s.keys.length &&
-							other.keys[0] === s.keys[0],
-					);
-
-				return (
-					<Text key={s.id}>
-						{i > 0 && <Text dimColor> │ </Text>}
-						<Text color="cyan">{displayKeys}</Text>
-						{isLeader ? (
-							<Text dimColor> {s.label}…</Text>
-						) : (
-							<Text dimColor> {s.label}</Text>
-						)}
-					</Text>
-				);
-			})}
+			{sorted.map((s, i) => (
+				<Text key={s.id}>
+					{i > 0 && <Text dimColor> │ </Text>}
+					<Text dimColor>{s.label}</Text>
+				</Text>
+			))}
 		</Box>
 	);
 }

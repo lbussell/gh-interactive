@@ -90,7 +90,7 @@ export function Select<T>({
 		{
 			id: "select-up-arrow",
 			keys: ["<up>"],
-			label: "up",
+			label: "↑/↓/j/k scroll",
 			action: moveUp,
 			hidden: true,
 		},
@@ -100,9 +100,8 @@ export function Select<T>({
 		{
 			id: "select-up-k",
 			keys: ["k"],
-			label: "up",
+			label: "↑/↓/j/k scroll",
 			action: moveUp,
-			hidden: true,
 		},
 		hasItems,
 	);
@@ -110,7 +109,7 @@ export function Select<T>({
 		{
 			id: "select-down-arrow",
 			keys: ["<down>"],
-			label: "down",
+			label: "↑/↓/j/k scroll",
 			action: moveDown,
 			hidden: true,
 		},
@@ -120,7 +119,7 @@ export function Select<T>({
 		{
 			id: "select-down-j",
 			keys: ["j"],
-			label: "down",
+			label: "↑/↓/j/k scroll",
 			action: moveDown,
 			hidden: true,
 		},
@@ -130,9 +129,8 @@ export function Select<T>({
 		{
 			id: "select-enter",
 			keys: ["<enter>"],
-			label: "select",
+			label: "↵ select",
 			action: confirmSelection,
-			hidden: true,
 		},
 		hasItems,
 	);
