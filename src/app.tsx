@@ -3,6 +3,7 @@ import { Box, Text, useApp, useInput } from "ink";
 import { useCallback } from "react";
 import { BranchView } from "./components/branchView";
 import { Select } from "./components/select";
+import { WorktreeView } from "./components/worktreeView";
 import { useConfig } from "./context/configContext";
 import { useGit } from "./context/gitContext";
 import { getLocalBranches, getWorktrees } from "./git";
@@ -50,10 +51,11 @@ export const App = () => {
 			<Box flexDirection="column" marginBottom={1}>
 				<Text dimColor>Worktrees:</Text>
 				{worktrees.data.map((worktree) => (
-					<Text key={worktree.path}>
-						{" "}
-						{worktree.path} ({worktree.branch ?? "detached"})
-					</Text>
+					<WorktreeView
+						key={worktree.path}
+						worktree={worktree}
+						selected={false}
+					/>
 				))}
 			</Box>
 			<Text dimColor>Choose a branch.</Text>
