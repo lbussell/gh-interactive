@@ -1,5 +1,5 @@
 import { Spinner } from "@inkjs/ui";
-import { Text, useApp } from "ink";
+import { Text } from "ink";
 import { PullRequestView } from "../components/pullRequestView";
 import { Select } from "../components/select";
 import type { PullRequest } from "../gitHub";
@@ -7,11 +7,13 @@ import type { CachedAsyncState } from "../hooks";
 
 type PullRequestsViewProps = {
 	pullRequests: CachedAsyncState<PullRequest[]>;
+	onSelect: (pr: PullRequest) => void;
 };
 
-export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
-	const { exit } = useApp();
-
+export function PullRequestsView({
+	pullRequests,
+	onSelect,
+}: PullRequestsViewProps) {
 	if (pullRequests.status === "loading") {
 		return <Spinner label="Loading pull requests..." />;
 	}
@@ -33,7 +35,20 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 					<PullRequestView pullRequest={pr} selected={selected} />
 				)}
 				renderEmpty={() => <Text>No open pull requests found.</Text>}
-				onSelect={(pr) => exit(String(pr.number))}
+				onSelect={onSelect}
+				itemShortcuts={[
+					{
+						id: "open-in-browser",
+						keys: ["o"],
+						label: "o open",
+						action: (pr) => {
+							Bun.spawn(["gh", "pr", "view", "--web", String(pr.number)], {
+								stdout: "ignore",
+								stderr: "ignore",
+							});
+						},
+					},
+				]}
 			/>
 			{pullRequests.refreshing && <Spinner label="Refreshing..." />}
 		</>

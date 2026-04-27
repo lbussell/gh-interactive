@@ -63,7 +63,10 @@ export const App = () => {
 					<WorktreesView worktrees={worktrees} worktreePRs={worktreePRs} />
 				</TabContent>
 				<TabContent id="pull-requests" label="Pull Requests">
-					<PullRequestsView pullRequests={pullRequests} />
+					<PullRequestsView
+						pullRequests={pullRequests}
+						onSelect={(pr) => exit(String(pr.number))}
+					/>
 				</TabContent>
 			</Tabs>
 			<ShortcutFooter />

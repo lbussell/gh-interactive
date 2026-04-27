@@ -6,7 +6,15 @@ import React, {
 	useRef,
 	useState,
 } from "react";
-import { useShortcuts } from "../context/shortcutContext";
+import { type Shortcut, useShortcuts } from "../context/shortcutContext";
+
+export type ItemShortcut<T> = {
+	id: string;
+	keys: string[];
+	label?: string;
+	action: (item: T) => void;
+	priority?: number;
+};
 
 type SelectProps<T> = {
 	items: T[];
@@ -15,6 +23,7 @@ type SelectProps<T> = {
 	renderEmpty?: () => ReactNode;
 	selector?: string;
 	onSelect: (item: T) => void;
+	itemShortcuts?: ItemShortcut<T>[];
 };
 
 export function Select<T>({
@@ -24,6 +33,7 @@ export function Select<T>({
 	renderEmpty,
 	selector = ">",
 	onSelect,
+	itemShortcuts,
 }: SelectProps<T>) {
 	const containerRef = useRef<DOMElement | null>(
 		null,
@@ -96,6 +106,22 @@ export function Select<T>({
 		}
 	}, [items, onSelect]);
 
+	const itemShortcutsRef = useRef<ItemShortcut<T>[]>([]);
+	itemShortcutsRef.current = itemShortcuts ?? [];
+
+	const boundItemShortcuts: Shortcut[] = (itemShortcuts ?? []).map((s) => ({
+		id: s.id,
+		keys: s.keys,
+		label: s.label,
+		priority: s.priority,
+		action: () => {
+			const item = items[selectedIndexRef.current];
+			if (item !== undefined) {
+				itemShortcutsRef.current.find((x) => x.id === s.id)?.action(item);
+			}
+		},
+	}));
+
 	const hasItems = items.length > 0;
 	useShortcuts(
 		[
@@ -114,6 +140,7 @@ export function Select<T>({
 				label: "↵ select",
 				action: confirmSelection,
 			},
+			...boundItemShortcuts,
 		],
 		hasItems,
 	);
