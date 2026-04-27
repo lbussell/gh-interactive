@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
-import { Box, Text, renderToString } from "ink";
-import { Select } from "./select";
+import { Box, renderToString, Text } from "ink";
 import { ShortcutProvider } from "../context/shortcutContext";
+import { Select } from "./select";
 
 type TestItem = {
 	id: string;

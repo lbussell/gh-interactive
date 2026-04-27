@@ -137,9 +137,7 @@ export function Select<T>({
 	return (
 		<Box ref={containerRef} flexDirection="column" flexGrow={1}>
 			{hiddenAbove > 0 && (
-				<Text dimColor>
-					{`${padding}↑ ${hiddenAbove} more`}
-				</Text>
+				<Text dimColor>{`${padding}↑ ${hiddenAbove} more`}</Text>
 			)}
 			{visibleItems.map((item, visibleIndex) => {
 				const actualIndex = visibleIndex + scrollOffset;
@@ -152,13 +150,9 @@ export function Select<T>({
 					</Box>
 				);
 			})}
-			{padLines > 0 && (
-				<Box height={padLines} />
-			)}
+			{padLines > 0 && <Box height={padLines} />}
 			{hiddenBelow > 0 && (
-				<Text dimColor>
-					{`${padding}↓ ${hiddenBelow} more`}
-				</Text>
+				<Text dimColor>{`${padding}↓ ${hiddenBelow} more`}</Text>
 			)}
 		</Box>
 	);

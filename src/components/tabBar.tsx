@@ -12,7 +12,7 @@ type TabBarProps = {
 
 export function TabBar({ tabs, activeId }: TabBarProps) {
 	return (
-		<Box marginBottom={1}>
+		<Box>
 			{tabs.map((tab, i) => {
 				const active = tab.id === activeId;
 				return (

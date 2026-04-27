@@ -21,7 +21,7 @@ export function ShortcutFooter() {
 	if (sorted.length === 0) return null;
 
 	return (
-		<Box marginTop={1}>
+		<Box>
 			{buffer.length > 0 && (
 				<Text>
 					<Text color="yellow">{buffer.join(" ")}</Text>
