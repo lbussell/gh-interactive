@@ -4,6 +4,9 @@ import { getBranches } from "./branches";
 import { useAsync } from "./hooks";
 import { Select } from "./select";
 
+const getErrorMessage = (error: unknown) =>
+	error instanceof Error ? error.message : String(error);
+
 export const App = () => {
 	const { exit } = useApp();
 	const branches = useAsync(getBranches);
@@ -22,14 +25,9 @@ export const App = () => {
 	}
 
 	if (branches.status === "error") {
-		const message =
-			branches.error instanceof Error
-				? branches.error.message
-				: String(branches.error);
-
 		return (
 			<Text>
-				Error: {message}. Press q or Esc to exit.
+				Error: {getErrorMessage(branches.error)}.
 			</Text>
 		);
 	}
@@ -37,8 +35,8 @@ export const App = () => {
 	return (
 		<Select
 			items={branches.data}
-			label="Choose a branch with Up/Down, Enter to select, q/Esc to exit."
-			emptyMessage="No local git branches found. Press q or Esc to exit."
+			label="Choose a branch."
+			emptyMessage="No local git branches found."
 			onSelect={(branch) => exit(branch)}
 			onCancel={() => exit()}
 		/>
