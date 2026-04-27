@@ -1,5 +1,21 @@
-import { Text } from "ink";
+import { useApp } from "ink";
 
-export function App() {
-  return <Text>Hello via Bun!</Text>;
+import { Select } from "./select";
+
+type AppProps = {
+  branches: string[];
+};
+
+export function App({ branches }: AppProps) {
+  const { exit } = useApp();
+
+  return (
+    <Select
+      items={branches}
+      label="Choose a branch with Up/Down, Enter to select, q/Esc to exit."
+      emptyMessage="No local git branches found. Press q or Esc to exit."
+      onSelect={(branch) => exit(branch)}
+      onCancel={() => exit()}
+    />
+  );
 }
