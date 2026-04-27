@@ -17,12 +17,12 @@ export function PullRequestView({
 
 	return (
 		<Box flexDirection="column">
-			<Text color={color}>
+			<Text color={color} wrap="truncate">
 				#{pullRequest.number} {pullRequest.title}
 				{pullRequest.draft ? " (draft)" : ""}
 				<Text dimColor> by {pullRequest.author}</Text>
 			</Text>
-			<Text dimColor color={color}>
+			<Text dimColor color={color} wrap="truncate">
 				{pullRequest.baseBranch} ← {source}
 			</Text>
 		</Box>

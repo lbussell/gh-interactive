@@ -36,17 +36,19 @@ export function WorktreeView({
 
 	return (
 		<Box flexDirection="column">
-			<Text color={color}>
+			<Text color={color} wrap="truncate">
 				{worktree.path}
 				{status ? ` [${status}]` : ""}
 			</Text>
 			<Box gap={1}>
-				<Text dimColor color={color}>
+				<Text dimColor color={color} wrap="truncate">
 					{worktree.head.slice(0, 7)}
 				</Text>
 				{pullRequests === null && branch && <Spinner label="" />}
 				{pullRequests && pullRequests.length > 0 && (
-					<Text dimColor>{pullRequests.map(formatPR).join(", ")}</Text>
+					<Text dimColor wrap="truncate">
+						{pullRequests.map(formatPR).join(", ")}
+					</Text>
 				)}
 			</Box>
 		</Box>
