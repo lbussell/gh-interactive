@@ -1,11 +1,10 @@
 import { Text, useApp, useInput } from "ink";
 import { Spinner } from "@inkjs/ui";
-
 import { getBranches } from "./branches";
 import { Select } from "./select";
 import { useAsync } from "./hooks";
 
-export function App() {
+export const App = () => {
   const { exit } = useApp();
   const branches = useAsync(getBranches, []);
 
