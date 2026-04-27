@@ -6,23 +6,29 @@ import { loadConfig } from "./config";
 import { CacheDirContext } from "./context/cacheContext";
 import { ConfigContext } from "./context/configContext";
 import { GitContext } from "./context/gitContext";
+import { GitHubContext } from "./context/gitHubContext";
 import { ShortcutProvider } from "./context/shortcutContext";
 import { getRepoName } from "./git";
+import { createOctokit, getRepoSlug } from "./gitHub";
 
 try {
 	const config = await loadConfig();
 	const git = simpleGit();
 	const repoName = await getRepoName(git);
 	const cacheDir = join(config.worktreeDirectory, repoName);
+	const octokit = await createOctokit();
+	const { owner, repo } = await getRepoSlug();
 
 	const { waitUntilExit } = render(
 		<ConfigContext value={config}>
 			<GitContext value={git}>
-				<CacheDirContext value={cacheDir}>
-					<ShortcutProvider>
-						<App />
-					</ShortcutProvider>
-				</CacheDirContext>
+				<GitHubContext value={{ octokit, owner, repo }}>
+					<CacheDirContext value={cacheDir}>
+						<ShortcutProvider>
+							<App />
+						</ShortcutProvider>
+					</CacheDirContext>
+				</GitHubContext>
 			</GitContext>
 		</ConfigContext>,
 		{
