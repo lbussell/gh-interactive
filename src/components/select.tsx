@@ -124,9 +124,9 @@ export function Select<T>({
 
 	return (
 		<Box flexDirection="column">
-			{hiddenAbove > 0 && (
+			{shouldScroll && (
 				<Text dimColor>
-					{padding}↑ {hiddenAbove} more
+					{hiddenAbove > 0 ? `${padding}↑ ${hiddenAbove} more` : " "}
 				</Text>
 			)}
 			{visibleItems.map((item, visibleIndex) => {
@@ -142,9 +142,9 @@ export function Select<T>({
 					</Box>
 				);
 			})}
-			{hiddenBelow > 0 && (
+			{shouldScroll && (
 				<Text dimColor>
-					{padding}↓ {hiddenBelow} more
+					{hiddenBelow > 0 ? `${padding}↓ ${hiddenBelow} more` : " "}
 				</Text>
 			)}
 		</Box>
