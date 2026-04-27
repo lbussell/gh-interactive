@@ -8,7 +8,7 @@ import type { CachedAsyncState } from "../hooks";
 
 type WorktreesViewProps = {
 	worktrees: CachedAsyncState<Worktree[]>;
-	worktreePRs: CachedAsyncState<WorktreePullRequestMap>;
+	worktreePRs: WorktreePullRequestMap;
 };
 
 export function WorktreesView({ worktrees, worktreePRs }: WorktreesViewProps) {
@@ -26,8 +26,6 @@ export function WorktreesView({ worktrees, worktreePRs }: WorktreesViewProps) {
 		return <Text>Error: {message}.</Text>;
 	}
 
-	const prMap = worktreePRs.status === "done" ? worktreePRs.data : null;
-
 	return (
 		<>
 			<Text dimColor>Choose a worktree.</Text>
@@ -37,7 +35,7 @@ export function WorktreesView({ worktrees, worktreePRs }: WorktreesViewProps) {
 				maxVisible={5}
 				renderItem={(worktree, selected) => {
 					const branch = worktree.branch?.replace("refs/heads/", "") ?? null;
-					const prs = branch && prMap ? (prMap[branch] ?? []) : null;
+					const prs = branch ? (worktreePRs[branch] ?? null) : null;
 					return (
 						<WorktreeView
 							worktree={worktree}

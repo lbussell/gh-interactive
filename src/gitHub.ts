@@ -66,38 +66,26 @@ export async function getPullRequests(
 	});
 }
 
-export async function getWorktreePullRequests(
+export async function getPullRequestsForBranch(
 	octokit: Octokit,
 	owner: string,
 	repo: string,
-): Promise<WorktreePullRequestMap> {
+	branch: string,
+): Promise<WorktreePullRequest[]> {
 	const { data } = await octokit.rest.pulls.list({
 		owner,
 		repo,
+		head: `${owner}:${branch}`,
 		state: "all",
 		sort: "updated",
 		direction: "desc",
-		per_page: 100,
+		per_page: 5,
 	});
 
-	const map: WorktreePullRequestMap = {};
-	for (const pr of data) {
-		const branch = pr.head.ref;
-		const entry: WorktreePullRequest = {
-			number: pr.number,
-			title: pr.title,
-			state: pr.merged_at
-				? "merged"
-				: pr.state === "closed"
-					? "closed"
-					: "open",
-			draft: pr.draft ?? false,
-		};
-		if (map[branch]) {
-			map[branch].push(entry);
-		} else {
-			map[branch] = [entry];
-		}
-	}
-	return map;
+	return data.map((pr) => ({
+		number: pr.number,
+		title: pr.title,
+		state: pr.merged_at ? "merged" : pr.state === "closed" ? "closed" : "open",
+		draft: pr.draft ?? false,
+	}));
 }

@@ -1,6 +1,12 @@
 import { mkdir } from "node:fs/promises";
-import { dirname } from "node:path";
-import { useEffect, useState } from "react";
+import { dirname, join } from "node:path";
+import type { Octokit } from "octokit";
+import { useEffect, useRef, useState } from "react";
+import {
+	getPullRequestsForBranch,
+	type WorktreePullRequest,
+	type WorktreePullRequestMap,
+} from "./gitHub";
 
 export type AsyncState<T> =
 	| { status: "loading"; data: null; error: null }
@@ -113,4 +119,63 @@ export function useAsyncCached<T>(
 	}, [asyncFn, cacheFilePath]);
 
 	return { ...state, refreshing };
+}
+
+/**
+ * Fetches pull requests for each branch independently, updating the
+ * returned map incrementally as each request resolves. Only fetches
+ * once per branch (tracked via ref). Caches per-branch results to disk.
+ */
+export function useWorktreePullRequests(
+	branches: string[],
+	octokit: Octokit,
+	owner: string,
+	repo: string,
+	cacheDir: string,
+): WorktreePullRequestMap {
+	const [map, setMap] = useState<WorktreePullRequestMap>({});
+	const fetchedRef = useRef<Set<string>>(new Set());
+
+	useEffect(() => {
+		const controller = new AbortController();
+
+		for (const branch of branches) {
+			if (fetchedRef.current.has(branch)) continue;
+			fetchedRef.current.add(branch);
+
+			const cachePath = join(cacheDir, "worktree-prs", `${branch}.cache.json`);
+
+			// Load cache first
+			Bun.file(cachePath)
+				.json()
+				.then((cached: unknown) => {
+					if (!controller.signal.aborted) {
+						setMap((prev) => {
+							if (prev[branch]) return prev;
+							return { ...prev, [branch]: cached as WorktreePullRequest[] };
+						});
+					}
+				})
+				.catch(() => {});
+
+			// Fetch fresh data
+			getPullRequestsForBranch(octokit, owner, repo, branch).then(
+				async (data) => {
+					if (controller.signal.aborted) return;
+					setMap((prev) => ({ ...prev, [branch]: data }));
+					try {
+						await mkdir(join(cacheDir, "worktree-prs"), { recursive: true });
+						await Bun.write(cachePath, JSON.stringify(data));
+					} catch {}
+				},
+				() => {},
+			);
+		}
+
+		return () => {
+			controller.abort();
+		};
+	}, [branches, octokit, owner, repo, cacheDir]);
+
+	return map;
 }
