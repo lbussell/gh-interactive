@@ -4,10 +4,12 @@ import { Box, Text, useApp, useInput } from "ink";
 import { useCallback } from "react";
 import { BranchView } from "./components/branchView";
 import { Select } from "./components/select";
+import { ShortcutFooter } from "./components/shortcutFooter";
 import { WorktreeView } from "./components/worktreeView";
 import { useCacheDir } from "./context/cacheContext";
 import { useConfig } from "./context/configContext";
 import { useGit } from "./context/gitContext";
+import { useShortcut } from "./context/shortcutContext";
 import { getLocalBranches, getWorktrees } from "./git";
 import { useAsyncCached } from "./hooks";
 
@@ -29,6 +31,11 @@ export const App = () => {
 	const fetchWorktrees = useCallback(() => getWorktrees(git), [git]);
 	const branches = useAsyncCached(fetchBranches, branchesCachePath);
 	const worktrees = useAsyncCached(fetchWorktrees, worktreesCachePath);
+
+	useShortcut(
+		{ id: "quit", keys: ["q"], label: "quit", action: () => exit() },
+		branches.status === "done",
+	);
 
 	useInput(
 		(input, key) => {
@@ -74,9 +81,9 @@ export const App = () => {
 				)}
 				renderEmpty={() => <Text>No local git branches found.</Text>}
 				onSelect={(branch) => exit(branch.name)}
-				onCancel={() => exit()}
 			/>
 			{branches.refreshing && <Spinner label="Refreshing..." />}
+			<ShortcutFooter />
 		</Box>
 	);
 };

@@ -10,7 +10,6 @@ type SelectProps<T> = {
 	selector?: string;
 	maxVisible?: number;
 	onSelect: (item: T) => void;
-	onCancel: () => void;
 };
 
 export function Select<T>({
@@ -21,7 +20,6 @@ export function Select<T>({
 	selector = ">",
 	maxVisible,
 	onSelect,
-	onCancel,
 }: SelectProps<T>) {
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [scrollOffset, setScrollOffset] = useState(0);
@@ -60,12 +58,7 @@ export function Select<T>({
 		}
 	}, [items.length, selectIndex]);
 
-	useInput((input, key) => {
-		if (input === "q" || key.escape) {
-			onCancel();
-			return;
-		}
-
+	useInput((_input, key) => {
 		if (items.length === 0) {
 			return;
 		}

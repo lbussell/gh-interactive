@@ -6,6 +6,7 @@ import { loadConfig } from "./config";
 import { CacheDirContext } from "./context/cacheContext";
 import { ConfigContext } from "./context/configContext";
 import { GitContext } from "./context/gitContext";
+import { ShortcutProvider } from "./context/shortcutContext";
 import { getRepoName } from "./git";
 
 try {
@@ -18,7 +19,9 @@ try {
 		<ConfigContext value={config}>
 			<GitContext value={git}>
 				<CacheDirContext value={cacheDir}>
-					<App />
+					<ShortcutProvider>
+						<App />
+					</ShortcutProvider>
 				</CacheDirContext>
 			</GitContext>
 		</ConfigContext>,
