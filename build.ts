@@ -75,7 +75,9 @@ await buildExecutable(extensionName);
 
 if (install) {
 	console.info("Removing old installation");
-	await Bun.$`gh extension remove ${extensionName}`;
+	try {
+		await Bun.$`gh extension remove ${extensionName}`;
+	} catch {}
 
 	console.info(`Installing ${extensionName}`);
 	await Bun.$`gh extension install .`;
