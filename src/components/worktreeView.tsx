@@ -1,44 +1,13 @@
-import { join } from "node:path";
 import { Spinner } from "@inkjs/ui";
 import { Box, Text } from "ink";
-import { useCallback } from "react";
-import { useCacheDir } from "../context/cacheContext";
-import { useGitHub } from "../context/gitHubContext";
 import type { Worktree } from "../git";
-import { getPullRequestsForBranch, type WorktreePullRequest } from "../gitHub";
-import { useAsyncCached } from "../hooks";
+import type { WorktreePullRequest } from "../gitHub";
 
 type WorktreeViewProps = {
 	worktree: Worktree;
 	selected: boolean;
+	pullRequests: WorktreePullRequest[] | null;
 };
-
-function PullRequestInfo({ branch }: { branch: string }) {
-	const { octokit, owner, repo } = useGitHub();
-	const cacheDir = useCacheDir();
-	const cachePath = join(cacheDir, "worktree-prs", `${branch}.cache.json`);
-
-	const fetchPRs = useCallback(
-		() => getPullRequestsForBranch(octokit, owner, repo, branch),
-		[octokit, owner, repo, branch],
-	);
-	const prs = useAsyncCached(fetchPRs, cachePath);
-
-	if (prs.status === "loading") {
-		return <Spinner label="" />;
-	}
-
-	if (prs.status === "error" || prs.data.length === 0) {
-		return null;
-	}
-
-	return (
-		<Text dimColor>
-			{prs.data.map((pr) => formatPR(pr)).join(", ")}
-			{prs.refreshing ? " …" : ""}
-		</Text>
-	);
-}
 
 function formatPR(pr: WorktreePullRequest): string {
 	const state =
@@ -52,7 +21,11 @@ function formatPR(pr: WorktreePullRequest): string {
 	return `#${pr.number} (${state})`;
 }
 
-export function WorktreeView({ worktree, selected }: WorktreeViewProps) {
+export function WorktreeView({
+	worktree,
+	selected,
+	pullRequests,
+}: WorktreeViewProps) {
 	const color = selected ? "green" : undefined;
 	const branch = worktree.branch?.replace("refs/heads/", "") ?? null;
 	const status = worktree.bare
@@ -71,7 +44,10 @@ export function WorktreeView({ worktree, selected }: WorktreeViewProps) {
 				<Text dimColor color={color}>
 					{worktree.head.slice(0, 7)}
 				</Text>
-				{branch && <PullRequestInfo branch={branch} />}
+				{pullRequests === null && branch && <Spinner label="" />}
+				{pullRequests && pullRequests.length > 0 && (
+					<Text dimColor>{pullRequests.map(formatPR).join(", ")}</Text>
+				)}
 			</Box>
 		</Box>
 	);
