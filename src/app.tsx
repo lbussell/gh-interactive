@@ -75,6 +75,7 @@ export const App = () => {
 				onSelect={(branch) => exit(branch.name)}
 				onCancel={() => exit()}
 			/>
+			{branches.refreshing && <Spinner label="Refreshing..." />}
 		</Box>
 	);
 };

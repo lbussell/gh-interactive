@@ -7,6 +7,8 @@ export type AsyncState<T> =
 	| { status: "done"; data: T; error: null }
 	| { status: "error"; data: null; error: unknown };
 
+export type CachedAsyncState<T> = AsyncState<T> & { refreshing: boolean };
+
 function isAbortError(error: unknown) {
 	return error instanceof DOMException && error.name === "AbortError";
 }
@@ -55,18 +57,20 @@ export function useAsync<T>(
 export function useAsyncCached<T>(
 	asyncFn: (signal: AbortSignal) => Promise<T>,
 	cacheFilePath: string,
-): AsyncState<T> {
+): CachedAsyncState<T> {
 	const [state, setState] = useState<AsyncState<T>>({
 		status: "loading",
 		data: null,
 		error: null,
 	});
+	const [refreshing, setRefreshing] = useState(true);
 
 	useEffect(() => {
 		const controller = new AbortController();
 		let hasFreshData = false;
 
 		setState({ status: "loading", data: null, error: null });
+		setRefreshing(true);
 
 		// Load cached data immediately
 		Bun.file(cacheFilePath)
@@ -86,6 +90,7 @@ export function useAsyncCached<T>(
 				if (!controller.signal.aborted) {
 					hasFreshData = true;
 					setState({ status: "done", data, error: null });
+					setRefreshing(false);
 					try {
 						await mkdir(dirname(cacheFilePath), { recursive: true });
 						await Bun.write(cacheFilePath, JSON.stringify(data));
@@ -97,6 +102,7 @@ export function useAsyncCached<T>(
 			(error: unknown) => {
 				if (!controller.signal.aborted && !isAbortError(error)) {
 					setState({ status: "error", data: null, error });
+					setRefreshing(false);
 				}
 			},
 		);
@@ -106,5 +112,5 @@ export function useAsyncCached<T>(
 		};
 	}, [asyncFn, cacheFilePath]);
 
-	return state;
+	return { ...state, refreshing };
 }
