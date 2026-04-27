@@ -1,4 +1,4 @@
-import { type DependencyList, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export type AsyncState<T> =
 	| { status: "loading"; data: null; error: null }
@@ -11,7 +11,6 @@ function isAbortError(error: unknown) {
 
 export function useAsync<T>(
 	asyncFn: (signal: AbortSignal) => Promise<T>,
-	deps: DependencyList = [],
 ): AsyncState<T> {
 	const [state, setState] = useState<AsyncState<T>>({
 		status: "loading",
@@ -40,7 +39,7 @@ export function useAsync<T>(
 		return () => {
 			controller.abort();
 		};
-	}, deps);
+	}, [asyncFn]);
 
 	return state;
 }

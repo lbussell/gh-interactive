@@ -1,5 +1,5 @@
 import { Box, Text, useInput } from "ink";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type SelectProps = {
 	items: string[];
@@ -19,10 +19,10 @@ export function Select({
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const selectedIndexRef = useRef(0);
 
-	const selectIndex = (nextIndex: number) => {
+	const selectIndex = useCallback((nextIndex: number) => {
 		selectedIndexRef.current = nextIndex;
 		setSelectedIndex(nextIndex);
-	};
+	}, []);
 
 	useEffect(() => {
 		if (items.length === 0) {
@@ -33,7 +33,7 @@ export function Select({
 		if (selectedIndexRef.current >= items.length) {
 			selectIndex(items.length - 1);
 		}
-	}, [items.length]);
+	}, [items.length, selectIndex]);
 
 	useInput((input, key) => {
 		if (input === "q" || key.escape) {

@@ -6,7 +6,7 @@ import { Select } from "./select";
 
 export const App = () => {
 	const { exit } = useApp();
-	const branches = useAsync(getBranches, []);
+	const branches = useAsync(getBranches);
 
 	useInput(
 		(input, key) => {
@@ -29,7 +29,7 @@ export const App = () => {
 
 		return (
 			<Text>
-				Failed to list git branches: {message}. Press q or Esc to exit.
+				Error: {message}. Press q or Esc to exit.
 			</Text>
 		);
 	}
