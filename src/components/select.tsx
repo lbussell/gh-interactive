@@ -11,20 +11,20 @@ import { useShortcuts } from "../context/shortcutContext";
 type SelectProps<T> = {
 	items: T[];
 	keyOf: (item: T) => string;
+	heightOf?: (item: T) => number;
 	renderItem: (item: T, selected: boolean) => ReactNode;
 	renderEmpty?: () => ReactNode;
 	selector?: string;
-	itemHeight?: number;
 	onSelect: (item: T) => void;
 };
 
 export function Select<T>({
 	items,
 	keyOf,
+	heightOf,
 	renderItem,
 	renderEmpty,
 	selector = ">",
-	itemHeight = 2,
 	onSelect,
 }: SelectProps<T>) {
 	const containerRef = useRef<DOMElement | null>(
@@ -32,36 +32,62 @@ export function Select<T>({
 	) as unknown as React.RefObject<DOMElement>;
 	const { height, hasMeasured } = useBoxMetrics(containerRef);
 
+	const itemHeightOf = heightOf ?? (() => 2);
+
 	// Reserve 2 lines for scroll indicators (top + bottom)
 	const indicatorLines = 2;
-	const maxVisible = hasMeasured
-		? Math.max(1, Math.floor((height - indicatorLines) / itemHeight))
-		: 5;
+	const budget = hasMeasured ? height - indicatorLines : 10;
 
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [scrollOffset, setScrollOffset] = useState(0);
 	const selectedIndexRef = useRef(0);
+
+	// Count how many items fit within a line budget starting from `from`
+	const countVisible = useCallback(
+		(from: number, lineBudget: number) => {
+			let lines = 0;
+			let count = 0;
+			for (let i = from; i < items.length; i++) {
+				const h = itemHeightOf(items[i] as T);
+				if (lines + h > lineBudget) break;
+				lines += h;
+				count++;
+			}
+			return Math.max(1, count);
+		},
+		[items, itemHeightOf],
+	);
 
 	const selectIndex = useCallback(
 		(nextIndex: number) => {
 			selectedIndexRef.current = nextIndex;
 			setSelectedIndex(nextIndex);
 
-			if (items.length <= maxVisible) {
-				return;
-			}
-
 			setScrollOffset((prev) => {
+				// If selected is above viewport, scroll up to it
 				if (nextIndex < prev) {
 					return nextIndex;
 				}
-				if (nextIndex >= prev + maxVisible) {
-					return nextIndex - maxVisible + 1;
+				// If selected is below viewport, scroll down until it fits
+				const visible = countVisible(prev, budget);
+				if (nextIndex >= prev + visible) {
+					// Walk backward from nextIndex to find a scroll offset
+					// that keeps nextIndex visible within budget
+					let offset = nextIndex;
+					let lines = itemHeightOf(items[nextIndex] as T);
+					while (
+						offset > 0 &&
+						lines + itemHeightOf(items[offset - 1] as T) <= budget
+					) {
+						offset--;
+						lines += itemHeightOf(items[offset] as T);
+					}
+					return offset;
 				}
 				return prev;
 			});
 		},
-		[maxVisible, items.length],
+		[items, budget, countVisible, itemHeightOf],
 	);
 
 	useEffect(() => {
@@ -129,12 +155,10 @@ export function Select<T>({
 		return <>{renderEmpty?.()}</>;
 	}
 
-	const shouldScroll = items.length > maxVisible;
-	const visibleItems = items.slice(scrollOffset, scrollOffset + maxVisible);
+	const visibleCount = countVisible(scrollOffset, budget);
+	const visibleItems = items.slice(scrollOffset, scrollOffset + visibleCount);
 	const hiddenAbove = scrollOffset;
-	const hiddenBelow = shouldScroll
-		? Math.max(0, items.length - scrollOffset - maxVisible)
-		: 0;
+	const hiddenBelow = Math.max(0, items.length - scrollOffset - visibleCount);
 
 	return (
 		<Box
