@@ -14,6 +14,7 @@ export type Shortcut = {
 	label: string;
 	action: () => void;
 	priority?: number;
+	hidden?: boolean;
 };
 
 type ShortcutContextType = {
@@ -26,6 +27,21 @@ const ShortcutContext = createContext<ShortcutContextType | null>(null);
 
 const SEQUENCE_TIMEOUT = 1000;
 
+function resolveKey(
+	input: string,
+	key: Record<string, boolean>,
+): string | null {
+	if (key.upArrow) return "<up>";
+	if (key.downArrow) return "<down>";
+	if (key.leftArrow) return "<left>";
+	if (key.rightArrow) return "<right>";
+	if (key.return) return "<enter>";
+	if (key.escape) return "<escape>";
+	if (key.tab) return "<tab>";
+	if (input) return input;
+	return null;
+}
+
 export function ShortcutProvider({ children }: { children: React.ReactNode }) {
 	const [shortcuts, setShortcuts] = useState<Shortcut[]>([]);
 	const [buffer, setBuffer] = useState<string[]>([]);
@@ -37,20 +53,18 @@ export function ShortcutProvider({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	useInput((input, key) => {
-		if (key.escape) {
+		const resolved = resolveKey(
+			input,
+			key as unknown as Record<string, boolean>,
+		);
+		if (!resolved) return;
+
+		if (resolved === "<escape>") {
 			setBuffer([]);
 			return;
 		}
 
-		// Ignore modifier-only or arrow keys in the shortcut system
-		if (key.upArrow || key.downArrow || key.leftArrow || key.rightArrow) {
-			return;
-		}
-		if (key.return || key.tab) {
-			return;
-		}
-
-		const next = [...buffer, input];
+		const next = [...buffer, resolved];
 
 		const exact = shortcuts.find(
 			(s) =>
@@ -109,6 +123,7 @@ export function useShortcut(shortcut: Shortcut, enabled = true) {
 			label: shortcut.label,
 			action: () => actionRef.current(),
 			priority: shortcut.priority,
+			hidden: shortcut.hidden,
 		});
 	}, [
 		enabled,
@@ -116,6 +131,7 @@ export function useShortcut(shortcut: Shortcut, enabled = true) {
 		shortcut.id,
 		shortcut.label,
 		shortcut.priority,
+		shortcut.hidden,
 		keysKey,
 	]);
 }

@@ -1,6 +1,7 @@
-import { Box, Text, useInput } from "ink";
+import { Box, Text } from "ink";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useShortcut } from "../context/shortcutContext";
 
 type SelectProps<T> = {
 	items: T[];
@@ -58,37 +59,83 @@ export function Select<T>({
 		}
 	}, [items.length, selectIndex]);
 
-	useInput((_input, key) => {
-		if (items.length === 0) {
-			return;
-		}
+	const moveUp = useCallback(() => {
+		if (items.length === 0) return;
+		const nextIndex =
+			selectedIndexRef.current === 0
+				? items.length - 1
+				: selectedIndexRef.current - 1;
+		selectIndex(nextIndex);
+	}, [items.length, selectIndex]);
 
-		if (key.upArrow) {
-			const nextIndex =
-				selectedIndexRef.current === 0
-					? items.length - 1
-					: selectedIndexRef.current - 1;
-			selectIndex(nextIndex);
-			return;
-		}
+	const moveDown = useCallback(() => {
+		if (items.length === 0) return;
+		const nextIndex =
+			selectedIndexRef.current === items.length - 1
+				? 0
+				: selectedIndexRef.current + 1;
+		selectIndex(nextIndex);
+	}, [items.length, selectIndex]);
 
-		if (key.downArrow) {
-			const nextIndex =
-				selectedIndexRef.current === items.length - 1
-					? 0
-					: selectedIndexRef.current + 1;
-			selectIndex(nextIndex);
-			return;
+	const confirmSelection = useCallback(() => {
+		if (items.length === 0) return;
+		const selectedItem = items[selectedIndexRef.current];
+		if (selectedItem !== undefined) {
+			onSelect(selectedItem);
 		}
+	}, [items, onSelect]);
 
-		if (key.return) {
-			const selectedItem = items[selectedIndexRef.current];
-
-			if (selectedItem !== undefined) {
-				onSelect(selectedItem);
-			}
-		}
-	});
+	const hasItems = items.length > 0;
+	useShortcut(
+		{
+			id: "select-up-arrow",
+			keys: ["<up>"],
+			label: "up",
+			action: moveUp,
+			hidden: true,
+		},
+		hasItems,
+	);
+	useShortcut(
+		{
+			id: "select-up-k",
+			keys: ["k"],
+			label: "up",
+			action: moveUp,
+			hidden: true,
+		},
+		hasItems,
+	);
+	useShortcut(
+		{
+			id: "select-down-arrow",
+			keys: ["<down>"],
+			label: "down",
+			action: moveDown,
+			hidden: true,
+		},
+		hasItems,
+	);
+	useShortcut(
+		{
+			id: "select-down-j",
+			keys: ["j"],
+			label: "down",
+			action: moveDown,
+			hidden: true,
+		},
+		hasItems,
+	);
+	useShortcut(
+		{
+			id: "select-enter",
+			keys: ["<enter>"],
+			label: "select",
+			action: confirmSelection,
+			hidden: true,
+		},
+		hasItems,
+	);
 
 	const padding = " ".repeat(selector.length + 1);
 

@@ -4,20 +4,21 @@ import { useShortcuts } from "../context/shortcutContext";
 export function ShortcutFooter() {
 	const { shortcuts, buffer } = useShortcuts();
 
+	const nonHidden = shortcuts.filter((s) => !s.hidden);
+
 	const visible =
 		buffer.length === 0
-			? shortcuts.filter(
+			? nonHidden.filter(
 					(s) =>
 						s.keys.length === 1 ||
-						// Show leader keys as "o …" when idle
-						!shortcuts.some(
+						!nonHidden.some(
 							(other) =>
 								other.id !== s.id &&
 								other.keys[0] === s.keys[0] &&
 								other.keys.length > s.keys.length,
 						),
 				)
-			: shortcuts.filter(
+			: nonHidden.filter(
 					(s) =>
 						s.keys.length > buffer.length &&
 						buffer.every((k, i) => s.keys[i] === k),
@@ -41,7 +42,7 @@ export function ShortcutFooter() {
 				const displayKeys = s.keys.slice(buffer.length).join(" ");
 				const isLeader =
 					buffer.length === 0 &&
-					shortcuts.some(
+					nonHidden.some(
 						(other) =>
 							other.id !== s.id &&
 							other.keys.length > s.keys.length &&
