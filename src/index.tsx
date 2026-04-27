@@ -2,8 +2,8 @@ import { render } from "ink";
 import simpleGit from "simple-git";
 import { App } from "./app";
 import { loadConfig } from "./config";
-import { ConfigContext } from "./config-context";
-import { GitContext } from "./git-context";
+import { ConfigContext } from "./context/configContext";
+import { GitContext } from "./context/gitContext";
 
 try {
 	const config = await loadConfig();

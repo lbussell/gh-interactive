@@ -1,11 +1,11 @@
 import { Spinner } from "@inkjs/ui";
 import { Box, Text, useApp, useInput } from "ink";
 import { useCallback } from "react";
-import { useConfig } from "./config-context";
+import { Select } from "./components/select";
+import { useConfig } from "./context/configContext";
+import { useGit } from "./context/gitContext";
 import { getLocalBranches, getWorktrees } from "./git";
-import { useGit } from "./git-context";
 import { useAsync } from "./hooks";
-import { Select } from "./select";
 
 const getErrorMessage = (error: unknown) =>
 	error instanceof Error ? error.message : String(error);

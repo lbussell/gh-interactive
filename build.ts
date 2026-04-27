@@ -3,7 +3,7 @@
 import { mkdir, rm } from "node:fs/promises";
 
 const extensionName = "gh-interactive";
-const entrypoint = "./index.tsx";
+const entrypoint = "./src/index.tsx";
 const outputDir = "dist";
 
 type ReleaseTarget = {
