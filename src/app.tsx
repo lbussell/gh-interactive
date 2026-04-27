@@ -2,19 +2,14 @@ import { join } from "node:path";
 import { Spinner } from "@inkjs/ui";
 import { Box, Text, useApp, useInput } from "ink";
 import { useCallback } from "react";
-import { BranchView } from "./components/branchView";
-import { Select } from "./components/select";
 import { ShortcutFooter } from "./components/shortcutFooter";
 import { WorktreeView } from "./components/worktreeView";
 import { useCacheDir } from "./context/cacheContext";
 import { useConfig } from "./context/configContext";
 import { useGit } from "./context/gitContext";
-import { useShortcut } from "./context/shortcutContext";
-import { getLocalBranches, getWorktrees } from "./git";
+import { getWorktrees } from "./git";
 import { useAsyncCached } from "./hooks";
-
-const getErrorMessage = (error: unknown) =>
-	error instanceof Error ? error.message : String(error);
+import { BranchesView } from "./views/branchesView";
 
 export const App = () => {
 	const { exit } = useApp();
@@ -22,20 +17,9 @@ export const App = () => {
 	const git = useGit();
 	const cacheDir = useCacheDir();
 
-	const branchesCachePath = join(cacheDir, "branches.cache.json");
 	const worktreesCachePath = join(cacheDir, "worktrees.cache.json");
-
-	// useAsyncCached re-runs its effect when the function identity changes,
-	// so useCallback keeps these stable across renders to avoid infinite loops.
-	const fetchBranches = useCallback(() => getLocalBranches(git), [git]);
 	const fetchWorktrees = useCallback(() => getWorktrees(git), [git]);
-	const branches = useAsyncCached(fetchBranches, branchesCachePath);
 	const worktrees = useAsyncCached(fetchWorktrees, worktreesCachePath);
-
-	useShortcut(
-		{ id: "quit", keys: ["q"], label: "quit", action: () => exit() },
-		branches.status === "done",
-	);
 
 	useInput(
 		(input, key) => {
@@ -43,19 +27,19 @@ export const App = () => {
 				exit();
 			}
 		},
-		{ isActive: branches.status !== "done" },
+		{ isActive: worktrees.status !== "done" },
 	);
 
-	if (branches.status === "loading" || worktrees.status === "loading") {
+	if (worktrees.status === "loading") {
 		return <Spinner label="Loading..." />;
 	}
 
-	if (branches.status === "error") {
-		return <Text>Error: {getErrorMessage(branches.error)}.</Text>;
-	}
-
 	if (worktrees.status === "error") {
-		return <Text>Error: {getErrorMessage(worktrees.error)}.</Text>;
+		const message =
+			worktrees.error instanceof Error
+				? worktrees.error.message
+				: String(worktrees.error);
+		return <Text>Error: {message}.</Text>;
 	}
 
 	return (
@@ -71,18 +55,7 @@ export const App = () => {
 					/>
 				))}
 			</Box>
-			<Text dimColor>Choose a branch.</Text>
-			<Select
-				items={branches.data}
-				keyOf={(b) => b.name}
-				maxVisible={5}
-				renderItem={(branch, selected) => (
-					<BranchView branch={branch} selected={selected} />
-				)}
-				renderEmpty={() => <Text>No local git branches found.</Text>}
-				onSelect={(branch) => exit(branch.name)}
-			/>
-			{branches.refreshing && <Spinner label="Refreshing..." />}
+			<BranchesView />
 			<ShortcutFooter />
 		</Box>
 	);
