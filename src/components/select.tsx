@@ -128,8 +128,6 @@ export function Select<T>({
 
 	const visibleCount = Math.min(maxVisible, items.length - scrollOffset);
 	const visibleItems = items.slice(scrollOffset, scrollOffset + visibleCount);
-	const needsScroll = !fitsWithout;
-
 	const padLines = Math.max(0, budget - visibleCount * itemHeight);
 
 	return (
@@ -146,9 +144,7 @@ export function Select<T>({
 				);
 			})}
 			{padLines > 0 && <Box height={padLines} />}
-			{needsScroll && (
-				<Text dimColor>{`${padding}${selectedIndex + 1}/${items.length}`}</Text>
-			)}
+			<Text dimColor>{`${padding}${selectedIndex + 1}/${items.length}`}</Text>
 		</Box>
 	);
 }
