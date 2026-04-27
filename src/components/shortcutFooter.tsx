@@ -1,8 +1,8 @@
 import { Box, Text } from "ink";
-import { useShortcuts } from "../context/shortcutContext";
+import { useShortcutContext } from "../context/shortcutContext";
 
 export function ShortcutFooter() {
-	const { shortcuts, buffer } = useShortcuts();
+	const { shortcuts, buffer } = useShortcutContext();
 
 	const visible =
 		buffer.length === 0

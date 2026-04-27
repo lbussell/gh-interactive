@@ -98,37 +98,47 @@ export function ShortcutProvider({ children }: { children: React.ReactNode }) {
 	);
 }
 
-export function useShortcuts() {
+export function useShortcutContext() {
 	const ctx = useContext(ShortcutContext);
 	if (!ctx) {
-		throw new Error("useShortcuts must be used within ShortcutProvider.");
+		throw new Error("useShortcutContext must be used within ShortcutProvider.");
 	}
 	return ctx;
 }
 
-export function useShortcut(shortcut: Shortcut, enabled = true) {
-	const { register } = useShortcuts();
-	const actionRef = useRef(shortcut.action);
-	actionRef.current = shortcut.action;
+export function useShortcuts(shortcuts: Shortcut[], enabled = true) {
+	const { register } = useShortcutContext();
+	const actionsRef = useRef<Record<string, () => void>>({});
 
-	const keysKey = shortcut.keys.join("\0");
+	for (const s of shortcuts) {
+		actionsRef.current[s.id] = s.action;
+	}
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: keysKey is an intentional stable serialization of shortcut.keys to avoid re-registering on every render
+	const depsKey = shortcuts
+		.map(
+			(s) =>
+				`${s.id}\0${s.keys.join(",")}\0${s.label ?? ""}\0${s.priority ?? ""}`,
+		)
+		.join("\n");
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: depsKey is an intentional stable serialization to avoid re-registering on every render
 	useEffect(() => {
 		if (!enabled) return;
-		return register({
-			id: shortcut.id,
-			keys: shortcut.keys,
-			label: shortcut.label,
-			action: () => actionRef.current(),
-			priority: shortcut.priority,
-		});
-	}, [
-		enabled,
-		register,
-		shortcut.id,
-		shortcut.label,
-		shortcut.priority,
-		keysKey,
-	]);
+
+		const unregisters = shortcuts.map((s) =>
+			register({
+				id: s.id,
+				keys: s.keys,
+				label: s.label,
+				action: () => actionsRef.current[s.id]?.(),
+				priority: s.priority,
+			}),
+		);
+
+		return () => {
+			for (const unregister of unregisters) {
+				unregister();
+			}
+		};
+	}, [enabled, register, depsKey]);
 }

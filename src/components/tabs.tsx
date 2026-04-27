@@ -1,6 +1,6 @@
 import { Box } from "ink";
 import { type ReactNode, useCallback, useState } from "react";
-import { useShortcut } from "../context/shortcutContext";
+import { useShortcuts } from "../context/shortcutContext";
 import { TabBar } from "./tabBar";
 
 type TabDefinition = {
@@ -25,15 +25,17 @@ export function Tabs({ tabs }: TabsProps) {
 		[tabs.length],
 	);
 
-	useShortcut({ id: "tab-prev-arrow", keys: ["<left>"], action: prevTab });
-	useShortcut({ id: "tab-prev-h", keys: ["h"], action: prevTab });
-	useShortcut({ id: "tab-next-arrow", keys: ["<right>"], action: nextTab });
-	useShortcut({
-		id: "tab-next-l",
-		keys: ["l"],
-		label: "←/→/h/l switch tabs",
-		action: nextTab,
-	});
+	useShortcuts([
+		{ id: "tab-prev-arrow", keys: ["<left>"], action: prevTab },
+		{ id: "tab-prev-h", keys: ["h"], action: prevTab },
+		{ id: "tab-next-arrow", keys: ["<right>"], action: nextTab },
+		{
+			id: "tab-next-l",
+			keys: ["l"],
+			label: "←/→/h/l switch tabs",
+			action: nextTab,
+		},
+	]);
 
 	const activeTab = tabs[activeIndex];
 	if (!activeTab) return null;

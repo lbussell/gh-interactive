@@ -1,7 +1,7 @@
 import { Box, Text } from "ink";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useShortcut } from "../context/shortcutContext";
+import { useShortcuts } from "../context/shortcutContext";
 
 type SelectProps<T> = {
 	items: T[];
@@ -86,31 +86,24 @@ export function Select<T>({
 	}, [items, onSelect]);
 
 	const hasItems = items.length > 0;
-	useShortcut(
-		{ id: "select-up-arrow", keys: ["<up>"], action: moveUp },
-		hasItems,
-	);
-	useShortcut(
-		{
-			id: "select-up-k",
-			keys: ["k"],
-			label: "↑/↓/j/k scroll",
-			action: moveUp,
-		},
-		hasItems,
-	);
-	useShortcut(
-		{ id: "select-down-arrow", keys: ["<down>"], action: moveDown },
-		hasItems,
-	);
-	useShortcut({ id: "select-down-j", keys: ["j"], action: moveDown }, hasItems);
-	useShortcut(
-		{
-			id: "select-enter",
-			keys: ["<enter>"],
-			label: "↵ select",
-			action: confirmSelection,
-		},
+	useShortcuts(
+		[
+			{ id: "select-up-arrow", keys: ["<up>"], action: moveUp },
+			{
+				id: "select-up-k",
+				keys: ["k"],
+				label: "↑/↓/j/k scroll",
+				action: moveUp,
+			},
+			{ id: "select-down-arrow", keys: ["<down>"], action: moveDown },
+			{ id: "select-down-j", keys: ["j"], action: moveDown },
+			{
+				id: "select-enter",
+				keys: ["<enter>"],
+				label: "↵ select",
+				action: confirmSelection,
+			},
+		],
 		hasItems,
 	);
 
