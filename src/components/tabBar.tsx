@@ -21,7 +21,7 @@ export function TabBar({ tabs, activeId }: TabBarProps) {
 						{active ? (
 							<Text bold>[{tab.label}]</Text>
 						) : (
-							<Text dimColor>{tab.label}</Text>
+							<Text dimColor>[{tab.label}]</Text>
 						)}
 					</Text>
 				);
