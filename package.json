@@ -1,6 +1,6 @@
 {
 	"name": "gh-interactive",
-	"module": "index.ts",
+	"module": "index.tsx",
 	"type": "module",
 	"private": true,
 	"devDependencies": {

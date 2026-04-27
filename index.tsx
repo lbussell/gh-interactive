@@ -1,11 +1,18 @@
 import { render } from "ink";
-import React from "react";
 import { App } from "./app";
+import { loadConfig } from "./config";
+import { ConfigContext } from "./config-context";
 
 try {
-	const { waitUntilExit } = render(React.createElement(App), {
-		stdout: process.stderr,
-	});
+	const config = await loadConfig();
+	const { waitUntilExit } = render(
+		<ConfigContext value={config}>
+			<App />
+		</ConfigContext>,
+		{
+			stdout: process.stderr,
+		},
+	);
 	const output = await waitUntilExit();
 
 	if (typeof output === "string") {

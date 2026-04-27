@@ -1,6 +1,7 @@
 import { Spinner } from "@inkjs/ui";
-import { Text, useApp, useInput } from "ink";
+import { Box, Text, useApp, useInput } from "ink";
 import { getLocalBranches } from "./branches";
+import { useConfig } from "./config-context";
 import { useAsync } from "./hooks";
 import { Select } from "./select";
 
@@ -9,6 +10,7 @@ const getErrorMessage = (error: unknown) =>
 
 export const App = () => {
 	const { exit } = useApp();
+	const config = useConfig();
 	const branches = useAsync(getLocalBranches);
 
 	useInput(
@@ -29,12 +31,15 @@ export const App = () => {
 	}
 
 	return (
-		<Select
-			items={branches.data}
-			label="Choose a branch."
-			emptyMessage="No local git branches found."
-			onSelect={(branch) => exit(branch)}
-			onCancel={() => exit()}
-		/>
+		<Box flexDirection="column">
+			<Text>Worktree directory: {config.worktreeDirectory}</Text>
+			<Select
+				items={branches.data}
+				label="Choose a branch."
+				emptyMessage="No local git branches found."
+				onSelect={(branch) => exit(branch)}
+				onCancel={() => exit()}
+			/>
+		</Box>
 	);
 };
