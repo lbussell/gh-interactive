@@ -6,7 +6,6 @@ import { BranchView } from "../components/branchView";
 import { Select } from "../components/select";
 import { useCacheDir } from "../context/cacheContext";
 import { useGit } from "../context/gitContext";
-import { useShortcut } from "../context/shortcutContext";
 import { getLocalBranches } from "../git";
 import { useAsyncCached } from "../hooks";
 
@@ -18,11 +17,6 @@ export function BranchesView() {
 	const branchesCachePath = join(cacheDir, "branches.cache.json");
 	const fetchBranches = useCallback(() => getLocalBranches(git), [git]);
 	const branches = useAsyncCached(fetchBranches, branchesCachePath);
-
-	useShortcut(
-		{ id: "quit", keys: ["q"], label: "quit", action: () => exit() },
-		branches.status === "done",
-	);
 
 	if (branches.status === "loading") {
 		return <Spinner label="Loading branches..." />;
