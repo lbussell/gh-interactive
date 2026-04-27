@@ -55,7 +55,7 @@ export const App = () => {
 
 	return (
 		<Box flexDirection="column">
-			<Tabs height={14}>
+			<Tabs height={16}>
 				<TabContent id="branches" label="Branches">
 					<BranchesView branches={branches} />
 				</TabContent>

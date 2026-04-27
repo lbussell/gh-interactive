@@ -32,12 +32,11 @@ export function Select<T>({
 
 	const itemHeight = 2;
 
-	// Determine if scrolling is needed: try fitting all items without indicator lines
+	// Reserve one line for the position indicator when scrolling is needed
 	const fullBudget = hasMeasured ? height : 12;
 	const totalLines = items.length * itemHeight;
 	const fitsWithout = totalLines <= fullBudget;
-	// Only reserve indicator lines when we actually need scrolling
-	const budget = fitsWithout ? fullBudget : fullBudget - 2;
+	const budget = fitsWithout ? fullBudget : fullBudget - 1;
 	const maxVisible = Math.floor(budget / itemHeight);
 
 	const [selectedIndex, setSelectedIndex] = useState(0);
@@ -129,16 +128,12 @@ export function Select<T>({
 
 	const visibleCount = Math.min(maxVisible, items.length - scrollOffset);
 	const visibleItems = items.slice(scrollOffset, scrollOffset + visibleCount);
-	const hiddenAbove = scrollOffset;
-	const hiddenBelow = Math.max(0, items.length - scrollOffset - visibleCount);
+	const needsScroll = !fitsWithout;
 
 	const padLines = Math.max(0, budget - visibleCount * itemHeight);
 
 	return (
 		<Box ref={containerRef} flexDirection="column" flexGrow={1}>
-			{hiddenAbove > 0 && (
-				<Text dimColor>{`${padding}↑ ${hiddenAbove} more`}</Text>
-			)}
 			{visibleItems.map((item, visibleIndex) => {
 				const actualIndex = visibleIndex + scrollOffset;
 				const selected = actualIndex === selectedIndex;
@@ -151,8 +146,8 @@ export function Select<T>({
 				);
 			})}
 			{padLines > 0 && <Box height={padLines} />}
-			{hiddenBelow > 0 && (
-				<Text dimColor>{`${padding}↓ ${hiddenBelow} more`}</Text>
+			{needsScroll && (
+				<Text dimColor>{`${padding}${selectedIndex + 1}/${items.length}`}</Text>
 			)}
 		</Box>
 	);
