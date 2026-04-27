@@ -32,12 +32,10 @@ export function Select<T>({
 
 	const itemHeight = 2;
 
-	// Reserve one line for the position indicator when scrolling is needed
+	// Reserve one line for the position indicator, which is always rendered.
 	const fullBudget = hasMeasured ? height : 12;
-	const totalLines = items.length * itemHeight;
-	const fitsWithout = totalLines <= fullBudget;
-	const budget = fitsWithout ? fullBudget : fullBudget - 1;
-	const maxVisible = Math.floor(budget / itemHeight);
+	const budget = Math.max(0, fullBudget - 1);
+	const maxVisible = Math.max(1, Math.floor(budget / itemHeight));
 
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [scrollOffset, setScrollOffset] = useState(0);

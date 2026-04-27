@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { stripVTControlCharacters } from "node:util";
 import { Box, renderToString, Text } from "ink";
 import { ShortcutProvider } from "../context/shortcutContext";
 import { Select } from "./select";
@@ -20,13 +21,28 @@ const uniformItems: TestItem[] = [
 	{ id: "8", title: "Theta", lines: ["detail h"] },
 ];
 
+const longItems: TestItem[] = [
+	{
+		id: "1",
+		title: "Alpha Alpha Alpha Alpha Alpha Alpha Alpha Alpha Alpha Alpha Alpha",
+		lines: ["detail a detail a detail a detail a detail a detail a detail a"],
+	},
+	{
+		id: "2",
+		title: "Beta Beta Beta Beta Beta Beta Beta Beta Beta Beta Beta",
+		lines: ["detail b detail b detail b detail b detail b detail b detail b"],
+	},
+];
+
 function renderItem(item: TestItem, selected: boolean) {
 	const color = selected ? "green" : undefined;
 	return (
 		<Box flexDirection="column">
-			<Text color={color}>{item.title}</Text>
+			<Text color={color} wrap="truncate">
+				{item.title}
+			</Text>
 			{item.lines.map((line) => (
-				<Text key={line} dimColor color={color}>
+				<Text key={line} dimColor color={color} wrap="truncate">
 					{line}
 				</Text>
 			))}
@@ -34,10 +50,10 @@ function renderItem(item: TestItem, selected: boolean) {
 	);
 }
 
-function renderSelect(items: TestItem[]) {
+function renderSelect(items: TestItem[], height = 14) {
 	return renderToString(
 		<ShortcutProvider>
-			<Box height={14} flexDirection="column">
+			<Box height={height} flexDirection="column">
 				<Select
 					items={items}
 					keyOf={(item) => item.id}
@@ -50,6 +66,10 @@ function renderSelect(items: TestItem[]) {
 	);
 }
 
+function stripAnsi(output: string) {
+	return stripVTControlCharacters(output);
+}
+
 test("uniform items: initial render shows first item selected", () => {
 	const output = renderSelect(uniformItems);
 	expect(output).toMatchSnapshot();
@@ -58,6 +78,13 @@ test("uniform items: initial render shows first item selected", () => {
 test("uniform items: fewer items than budget shows all with padding", () => {
 	const output = renderSelect(uniformItems.slice(0, 3));
 	expect(output).toMatchSnapshot();
+});
+
+test("items that fit still reserve room for the position indicator", () => {
+	const output = stripAnsi(renderSelect(longItems, 12));
+	expect(output).toContain("> Alpha Alpha Alpha");
+	expect(output).toContain("  Beta Beta Beta");
+	expect(output).not.toContain("> detail a");
 });
 
 test("empty items shows renderEmpty", () => {
@@ -78,7 +105,7 @@ test("empty items shows renderEmpty", () => {
 	expect(output).toMatchSnapshot();
 });
 
-test("single item renders without scroll indicators", () => {
-	const output = renderSelect([uniformItems[0]!]);
+test("single item renders with position indicator", () => {
+	const output = renderSelect(uniformItems.slice(0, 1));
 	expect(output).toMatchSnapshot();
 });
