@@ -8,6 +8,7 @@ type SelectProps<T> = {
 	renderItem: (item: T, selected: boolean) => ReactNode;
 	renderEmpty?: () => ReactNode;
 	selector?: string;
+	maxVisible?: number;
 	onSelect: (item: T) => void;
 	onCancel: () => void;
 };
@@ -18,16 +19,35 @@ export function Select<T>({
 	renderItem,
 	renderEmpty,
 	selector = ">",
+	maxVisible,
 	onSelect,
 	onCancel,
 }: SelectProps<T>) {
 	const [selectedIndex, setSelectedIndex] = useState(0);
+	const [scrollOffset, setScrollOffset] = useState(0);
 	const selectedIndexRef = useRef(0);
 
-	const selectIndex = useCallback((nextIndex: number) => {
-		selectedIndexRef.current = nextIndex;
-		setSelectedIndex(nextIndex);
-	}, []);
+	const selectIndex = useCallback(
+		(nextIndex: number) => {
+			selectedIndexRef.current = nextIndex;
+			setSelectedIndex(nextIndex);
+
+			if (maxVisible === undefined || items.length <= maxVisible) {
+				return;
+			}
+
+			setScrollOffset((prev) => {
+				if (nextIndex < prev) {
+					return nextIndex;
+				}
+				if (nextIndex >= prev + maxVisible) {
+					return nextIndex - maxVisible + 1;
+				}
+				return prev;
+			});
+		},
+		[maxVisible, items.length],
+	);
 
 	useEffect(() => {
 		if (items.length === 0) {
@@ -83,10 +103,27 @@ export function Select<T>({
 		return <>{renderEmpty?.()}</>;
 	}
 
+	const shouldScroll = maxVisible !== undefined && items.length > maxVisible;
+	const visibleItems = shouldScroll
+		? items.slice(scrollOffset, scrollOffset + maxVisible)
+		: items;
+	const hiddenAbove = shouldScroll ? scrollOffset : 0;
+	const hiddenBelow = shouldScroll
+		? items.length - scrollOffset - maxVisible
+		: 0;
+
 	return (
 		<Box flexDirection="column">
-			{items.map((item, index) => {
-				const selected = index === selectedIndex;
+			{hiddenAbove > 0 && (
+				<Text dimColor>
+					{padding}↑ {hiddenAbove} more
+				</Text>
+			)}
+			{visibleItems.map((item, visibleIndex) => {
+				const actualIndex = shouldScroll
+					? visibleIndex + scrollOffset
+					: visibleIndex;
+				const selected = actualIndex === selectedIndex;
 
 				return (
 					<Box key={keyOf(item)} flexDirection="row">
@@ -95,6 +132,11 @@ export function Select<T>({
 					</Box>
 				);
 			})}
+			{hiddenBelow > 0 && (
+				<Text dimColor>
+					{padding}↓ {hiddenBelow} more
+				</Text>
+			)}
 		</Box>
 	);
 }

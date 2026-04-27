@@ -68,6 +68,7 @@ export const App = () => {
 			<Select
 				items={branches.data}
 				keyOf={(b) => b.name}
+				maxVisible={5}
 				renderItem={(branch, selected) => (
 					<BranchView branch={branch} selected={selected} />
 				)}
