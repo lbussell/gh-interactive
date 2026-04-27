@@ -8,18 +8,19 @@ import { GitContext } from "./git-context";
 try {
 	const config = await loadConfig();
 	const git = simpleGit();
+
 	const { waitUntilExit } = render(
-		<GitContext value={git}>
-			<ConfigContext value={config}>
+		<ConfigContext value={config}>
+			<GitContext value={git}>
 				<App />
-			</ConfigContext>
-		</GitContext>,
+			</GitContext>
+		</ConfigContext>,
 		{
 			stdout: process.stderr,
 		},
 	);
-	const output = await waitUntilExit();
 
+	const output = await waitUntilExit();
 	if (typeof output === "string") {
 		process.stdout.write(`${output}\n`);
 	}
