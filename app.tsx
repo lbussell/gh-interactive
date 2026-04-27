@@ -1,7 +1,9 @@
 import { Spinner } from "@inkjs/ui";
 import { Box, Text, useApp, useInput } from "ink";
+import { useCallback } from "react";
 import { useConfig } from "./config-context";
 import { getLocalBranches, getWorktrees } from "./git";
+import { useGit } from "./git-context";
 import { useAsync } from "./hooks";
 import { Select } from "./select";
 
@@ -11,8 +13,14 @@ const getErrorMessage = (error: unknown) =>
 export const App = () => {
 	const { exit } = useApp();
 	const config = useConfig();
-	const branches = useAsync(getLocalBranches);
-	const worktrees = useAsync(getWorktrees);
+	const git = useGit();
+
+	// useAsync re-runs its effect when the function identity changes,
+	// so useCallback keeps these stable across renders to avoid infinite loops.
+	const fetchBranches = useCallback(() => getLocalBranches(git), [git]);
+	const fetchWorktrees = useCallback(() => getWorktrees(git), [git]);
+	const branches = useAsync(fetchBranches);
+	const worktrees = useAsync(fetchWorktrees);
 
 	useInput(
 		(input, key) => {

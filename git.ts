@@ -1,4 +1,4 @@
-import simpleGit from "simple-git";
+import type { SimpleGit } from "simple-git";
 
 export type Branch = {
 	name: string;
@@ -15,10 +15,8 @@ export type Worktree = {
 	detached: boolean;
 };
 
-export async function getLocalBranches(
-	_signal: AbortSignal,
-): Promise<Branch[]> {
-	const result = await simpleGit().branchLocal();
+export async function getLocalBranches(git: SimpleGit): Promise<Branch[]> {
+	const result = await git.branchLocal();
 	return result.all.flatMap((name) => {
 		const branch = result.branches[name];
 		if (branch === undefined) {
@@ -63,7 +61,7 @@ function parseWorktrees(output: string): Worktree[] {
 		});
 }
 
-export async function getWorktrees(_signal: AbortSignal): Promise<Worktree[]> {
-	const output = await simpleGit().raw("worktree", "list", "--porcelain");
+export async function getWorktrees(git: SimpleGit): Promise<Worktree[]> {
+	const output = await git.raw("worktree", "list", "--porcelain");
 	return parseWorktrees(output);
 }

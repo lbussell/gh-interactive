@@ -1,14 +1,19 @@
 import { render } from "ink";
+import simpleGit from "simple-git";
 import { App } from "./app";
 import { loadConfig } from "./config";
 import { ConfigContext } from "./config-context";
+import { GitContext } from "./git-context";
 
 try {
 	const config = await loadConfig();
+	const git = simpleGit();
 	const { waitUntilExit } = render(
-		<ConfigContext value={config}>
-			<App />
-		</ConfigContext>,
+		<GitContext value={git}>
+			<ConfigContext value={config}>
+				<App />
+			</ConfigContext>
+		</GitContext>,
 		{
 			stdout: process.stderr,
 		},
