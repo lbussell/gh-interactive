@@ -10,18 +10,9 @@ gh extension install lbussell/gh-interactive
 
 ## Usage
 
-Run the extension:
-
-```console
-gh interactive
-```
-
-Optionally, set up a useful alias to get to it faster:
-
-```console
-gh alias set i interactive
-gh i
-```
+- Run the extension: `gh interactive`
+- Optionally, set up a useful alias to get to it faster:
+  `gh alias set i interactive`. Then you can get to the extension using `gh i`.
 
 ## Developer guide
 
@@ -32,14 +23,8 @@ gh i
 
 ### Development
 
-To install development dependencies:
+Useful commands:
 
-```bash
-bun install
-```
-
-To run:
-
-```bash
-bun run index.ts
-```
+- Install development dependencies: `bun install`
+- Run the app: `bun run index.ts`
+- See other development commands: `bun run`
