@@ -1,66 +1,148 @@
 import { Box, Text } from "ink";
-import { useShortcutContext } from "../context/shortcutContext";
+import {
+	isShortcutGroup,
+	type ShortcutDict,
+	useShortcutContext,
+} from "../context/shortcutContext";
+
+function formatKeyForDisplay(key: string): string {
+	switch (key) {
+		case "<up>":
+			return "↑";
+		case "<down>":
+			return "↓";
+		case "<left>":
+			return "←";
+		case "<right>":
+			return "→";
+		case "<enter>":
+			return "↵";
+		case "<escape>":
+			return "esc";
+		case "<tab>":
+			return "tab";
+		case "<home>":
+			return "home";
+		case "<end>":
+			return "end";
+		case " ":
+			return "space";
+		default:
+			return key;
+	}
+}
+
+type DisplayEntry = {
+	keys: string;
+	label: string;
+};
+
+function collectDisplayEntries(
+	dict: ShortcutDict,
+	showHidden: boolean,
+): DisplayEntry[] {
+	const groups = new Map<string, string[]>();
+	const order: string[] = [];
+
+	for (const [key, entry] of Object.entries(dict)) {
+		if (!showHidden && entry.hidden) continue;
+		const { label } = entry;
+		const displayKey = formatKeyForDisplay(key);
+
+		const existing = groups.get(label);
+		if (existing) {
+			existing.push(displayKey);
+		} else {
+			groups.set(label, [displayKey]);
+			order.push(label);
+		}
+	}
+
+	return order.map((label) => ({
+		keys: groups.get(label)?.join("/") ?? "",
+		label,
+	}));
+}
 
 export function ShortcutFooter() {
-	const { shortcuts, buffer } = useShortcutContext();
+	const { merged, buffer, showAll } = useShortcutContext();
+	const termWidth = process.stderr.columns || 80;
 
-	// When no leader key is active, show single-key shortcuts + leader key prefixes
-	// When a leader key is active, show only matching continuations
-	const visible =
-		buffer.length === 0
-			? shortcuts.filter((s) => s.label && s.keys.length === 1)
-			: shortcuts.filter(
-					(s) =>
-						s.label &&
-						s.keys.length > buffer.length &&
-						buffer.every((k, i) => s.keys[i] === k),
-				);
+	// Walk tree to current level based on buffer
+	let currentDict = merged;
+	const bufferParts: { key: string; label: string }[] = [];
+	let validBuffer = true;
 
-	// Collect leader key prefixes (keys that are only the start of multi-key sequences)
-	const leaderPrefixes =
-		buffer.length === 0
-			? [
-					...new Set(
-						shortcuts
-							.filter((s) => s.keys.length > 1)
-							.map((s) => s.keys[0])
-							.filter(
-								(prefix) =>
-									prefix !== undefined &&
-									!shortcuts.some(
-										(s) => s.keys.length === 1 && s.keys[0] === prefix,
-									),
-							),
-					),
-				]
-			: [];
+	for (const key of buffer) {
+		const entry = currentDict[key];
+		if (entry && isShortcutGroup(entry)) {
+			bufferParts.push({
+				key: formatKeyForDisplay(key),
+				label: entry.label,
+			});
+			currentDict = entry.children;
+		} else {
+			validBuffer = false;
+			break;
+		}
+	}
 
-	const sorted = [...visible].sort(
-		(a, b) => (b.priority ?? 0) - (a.priority ?? 0),
+	if (!validBuffer) return null;
+
+	// Show all children when in a leader group
+	const showHidden = showAll || buffer.length > 0;
+	const entries = collectDisplayEntries(currentDict, showHidden);
+
+	// Add ? help at root level
+	if (buffer.length === 0) {
+		entries.push({ keys: "?", label: "help" });
+	}
+
+	if (entries.length === 0) return null;
+
+	// Multi-row grid with aligned columns
+	const separator = " │ ";
+	const sepLen = separator.length;
+	const maxEntryWidth = Math.max(
+		...entries.map((e) => e.keys.length + 1 + e.label.length),
 	);
-
-	if (sorted.length === 0 && leaderPrefixes.length === 0) return null;
+	const colWidth = maxEntryWidth;
+	const numCols = Math.max(
+		1,
+		Math.floor((termWidth + sepLen) / (colWidth + sepLen)),
+	);
+	const numRows = Math.ceil(entries.length / numCols);
 
 	return (
-		<Box>
-			{buffer.length > 0 && (
+		<Box flexDirection="column">
+			{bufferParts.length > 0 && (
 				<Text>
-					<Text color="yellow">{buffer.join(" ")}</Text>
-					<Text dimColor>{" → "}</Text>
+					<Text color="yellow">
+						{bufferParts.map((p) => `${p.key} ${p.label}`).join(" → ")}
+					</Text>
+					<Text dimColor>{" →"}</Text>
 				</Text>
 			)}
-			{sorted.map((s, i) => (
-				<Text key={s.id}>
-					{i > 0 && <Text dimColor> │ </Text>}
-					<Text dimColor>{s.label}</Text>
-				</Text>
-			))}
-			{leaderPrefixes.map((prefix) => (
-				<Text key={`leader-${prefix}`}>
-					{sorted.length > 0 && <Text dimColor> │ </Text>}
-					<Text dimColor>{prefix} …</Text>
-				</Text>
-			))}
+			{Array.from({ length: numRows }, (_, rowIdx) => {
+				const rowEntries = entries.slice(
+					rowIdx * numCols,
+					(rowIdx + 1) * numCols,
+				);
+				const rowKey = rowEntries.map((e) => e.keys).join(",");
+				return (
+					<Box key={rowKey}>
+						{rowEntries.map((entry, colIdx) => {
+							const text = `${entry.keys} ${entry.label}`.padEnd(colWidth);
+							return (
+								<Text key={entry.keys}>
+									{colIdx > 0 && <Text dimColor>{separator}</Text>}
+									<Text dimColor>{text}</Text>
+								</Text>
+							);
+						})}
+					</Box>
+				);
+			})}
 		</Box>
 	);
 }

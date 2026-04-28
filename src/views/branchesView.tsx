@@ -134,30 +134,29 @@ export function BranchesView({ branches, onBranchDeleted }: BranchesViewProps) {
 					onSelect={(branch) => {
 						checkoutBranch(branch);
 					}}
-					itemShortcuts={[
-						{
-							id: "open-in-vscode",
-							keys: ["o", "e"],
-							label: "e code",
-							action: (branch) => {
-								openInVSCode(branch);
+					itemShortcuts={{
+						o: {
+							label: "open",
+							children: {
+								e: {
+									label: "code",
+									action: (branch) => {
+										openInVSCode(branch);
+									},
+								},
+								c: {
+									label: "copilot",
+									action: (branch) => {
+										startCopilot(branch);
+									},
+								},
 							},
 						},
-						{
-							id: "copilot",
-							keys: ["o", "c"],
-							label: "c copilot",
-							action: (branch) => {
-								startCopilot(branch);
-							},
-						},
-						{
-							id: "delete-branch",
-							keys: ["d"],
-							label: "d delete",
+						d: {
+							label: "delete",
 							action: (branch) => setDeleteState({ step: "confirm", branch }),
 						},
-					]}
+					}}
 				/>
 				{status && <Text>{status}</Text>}
 				{branches.refreshing && <Spinner label="Refreshing..." />}

@@ -51,9 +51,9 @@ export const App = () => {
 		repo,
 	);
 
-	useShortcuts([
-		{ id: "quit", keys: ["q"], label: "q quit", action: () => exit() },
-	]);
+	useShortcuts({
+		q: { label: "quit", action: () => exit() },
+	});
 
 	return (
 		<Box flexDirection="column">

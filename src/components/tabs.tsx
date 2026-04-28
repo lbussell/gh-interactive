@@ -48,17 +48,12 @@ export function Tabs({ activeId, onTabChange, children, height }: TabsProps) {
 		[tabs, activeIndex, onTabChange],
 	);
 
-	useShortcuts([
-		{ id: "tab-prev-arrow", keys: ["<left>"], action: prevTab },
-		{ id: "tab-prev-h", keys: ["h"], action: prevTab },
-		{ id: "tab-next-arrow", keys: ["<right>"], action: nextTab },
-		{
-			id: "tab-next-l",
-			keys: ["l"],
-			label: "←→ switch tabs",
-			action: nextTab,
-		},
-	]);
+	useShortcuts({
+		"<left>": { label: "prev tab", action: prevTab, hidden: true },
+		h: { label: "prev tab", action: prevTab, hidden: true },
+		"<right>": { label: "next tab", action: nextTab, hidden: true },
+		l: { label: "next tab", action: nextTab, hidden: true },
+	});
 
 	return (
 		<Box flexDirection="column">

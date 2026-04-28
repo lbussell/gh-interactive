@@ -6,16 +6,51 @@ import React, {
 	useRef,
 	useState,
 } from "react";
-import { type Shortcut, useShortcuts } from "../context/shortcutContext";
+import { type ShortcutDict, useShortcuts } from "../context/shortcutContext";
 import { clamp } from "../util";
 
-export type ItemShortcut<T> = {
-	id: string;
-	keys: string[];
-	label?: string;
+export type ItemShortcutAction<T> = {
+	label: string;
 	action: (item: T) => void;
-	priority?: number;
+	hidden?: boolean;
 };
+
+export type ItemShortcutGroup<T> = {
+	label: string;
+	children: ItemShortcutDict<T>;
+	hidden?: boolean;
+};
+
+export type ItemShortcutEntry<T> = ItemShortcutAction<T> | ItemShortcutGroup<T>;
+export type ItemShortcutDict<T> = Record<string, ItemShortcutEntry<T>>;
+
+function bindItemShortcuts<T>(
+	dict: ItemShortcutDict<T> | undefined,
+	getItem: () => T | undefined,
+): ShortcutDict {
+	if (!dict) return {};
+	const result: ShortcutDict = {};
+	for (const [key, entry] of Object.entries(dict)) {
+		if ("children" in entry) {
+			result[key] = {
+				label: entry.label,
+				hidden: entry.hidden,
+				children: bindItemShortcuts(entry.children, getItem),
+			};
+		} else {
+			const itemAction = entry.action;
+			result[key] = {
+				label: entry.label,
+				hidden: entry.hidden,
+				action: () => {
+					const item = getItem();
+					if (item !== undefined) itemAction(item);
+				},
+			};
+		}
+	}
+	return result;
+}
 
 type SelectProps<T> = {
 	items: T[];
@@ -25,7 +60,7 @@ type SelectProps<T> = {
 	selector?: string;
 	focusKey?: string | null;
 	onSelect: (item: T) => void;
-	itemShortcuts?: ItemShortcut<T>[];
+	itemShortcuts?: ItemShortcutDict<T>;
 };
 
 export function Select<T>({
@@ -107,18 +142,8 @@ export function Select<T>({
 		}
 	}, [items, onSelect]);
 
-	const boundItemShortcuts: Shortcut[] = (itemShortcuts ?? []).map((s) => ({
-		id: s.id,
-		keys: s.keys,
-		label: s.label,
-		priority: s.priority,
-		action: () => {
-			const item = items[selectedIndexRef.current];
-			if (item !== undefined) {
-				s.action(item);
-			}
-		},
-	}));
+	const getSelectedItem = () => items[selectedIndexRef.current];
+	const boundItemShortcuts = bindItemShortcuts(itemShortcuts, getSelectedItem);
 
 	const goToFirst = useCallback(() => selectIndex(0), [selectIndex]);
 	const goToLast = useCallback(
@@ -128,32 +153,18 @@ export function Select<T>({
 
 	const hasItems = items.length > 0;
 	useShortcuts(
-		[
-			{ id: "select-up-arrow", keys: ["<up>"], action: () => move(-1) },
-			{
-				id: "select-up-k",
-				keys: ["k"],
-				label: "↑↓ nav",
-				action: () => move(-1),
-			},
-			{ id: "select-down-arrow", keys: ["<down>"], action: () => move(1) },
-			{ id: "select-down-j", keys: ["j"], action: () => move(1) },
-			{ id: "select-home", keys: ["<home>"], action: goToFirst },
-			{ id: "select-top-g", keys: ["g"], action: goToFirst },
-			{ id: "select-end", keys: ["<end>"], action: goToLast },
-			{
-				id: "select-bottom-G",
-				keys: ["G"],
-				label: "g/G top/bottom",
-				action: goToLast,
-			},
-			{
-				id: "select-enter",
-				keys: ["<enter>"],
-				action: confirmSelection,
-			},
+		{
 			...boundItemShortcuts,
-		],
+			k: { label: "up", action: () => move(-1), hidden: true },
+			"<up>": { label: "up", action: () => move(-1), hidden: true },
+			j: { label: "down", action: () => move(1), hidden: true },
+			"<down>": { label: "down", action: () => move(1), hidden: true },
+			g: { label: "top", action: goToFirst, hidden: true },
+			"<home>": { label: "top", action: goToFirst, hidden: true },
+			G: { label: "bottom", action: goToLast, hidden: true },
+			"<end>": { label: "bottom", action: goToLast, hidden: true },
+			"<enter>": { label: "select", action: confirmSelection, hidden: true },
+		},
 		hasItems,
 	);
 

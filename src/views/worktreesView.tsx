@@ -42,14 +42,9 @@ export function WorktreesView({
 	const [modal, setModal] = useState<ModalState>(null);
 
 	useShortcuts(
-		[
-			{
-				id: "create-worktree",
-				keys: ["n"],
-				label: "n new",
-				action: () => setModal({ type: "create" }),
-			},
-		],
+		{
+			n: { label: "new", action: () => setModal({ type: "create" }) },
+		},
 		modal === null,
 	);
 
@@ -81,26 +76,25 @@ export function WorktreesView({
 					}}
 					renderEmpty={() => <Text>No worktrees found.</Text>}
 					onSelect={(worktree) => exit(shellExitAction(worktree.path))}
-					itemShortcuts={[
-						{
-							id: "open-in-vscode",
-							keys: ["o", "e"],
-							label: "e code",
-							action: (worktree) => openInEditor(worktree.path),
+					itemShortcuts={{
+						o: {
+							label: "open",
+							children: {
+								e: {
+									label: "code",
+									action: (worktree) => openInEditor(worktree.path),
+								},
+								c: {
+									label: "copilot",
+									action: (worktree) => exit(copilotExitAction(worktree.path)),
+								},
+							},
 						},
-						{
-							id: "copilot",
-							keys: ["o", "c"],
-							label: "c copilot",
-							action: (worktree) => exit(copilotExitAction(worktree.path)),
-						},
-						{
-							id: "remove-worktree",
-							keys: ["d"],
-							label: "d remove",
+						d: {
+							label: "remove",
 							action: (worktree) => setModal({ type: "remove", worktree }),
 						},
-					]}
+					}}
 				/>
 				{worktrees.refreshing && <Spinner label="Refreshing..." />}
 			</Box>

@@ -132,38 +132,35 @@ export function PullRequestsView({
 					)}
 					renderEmpty={() => <Text>No open pull requests found.</Text>}
 					onSelect={() => {}}
-					itemShortcuts={[
-						{
-							id: "open-in-browser",
-							keys: ["o", "b"],
-							label: "b browser",
-							action: (pr) => openPrInBrowser(pr.number),
+					itemShortcuts={{
+						o: {
+							label: "open",
+							children: {
+								b: {
+									label: "browser",
+									action: (pr) => openPrInBrowser(pr.number),
+								},
+								e: {
+									label: "code",
+									action: (pr) => {
+										openInVSCode(pr);
+									},
+								},
+								c: {
+									label: "copilot",
+									action: (pr) => {
+										startCopilot(pr);
+									},
+								},
+							},
 						},
-						{
-							id: "create-worktree",
-							keys: ["w"],
-							label: "w worktree",
+						w: {
+							label: "worktree",
 							action: (pr) => {
 								createWorktree(pr);
 							},
 						},
-						{
-							id: "open-in-vscode",
-							keys: ["o", "e"],
-							label: "e code",
-							action: (pr) => {
-								openInVSCode(pr);
-							},
-						},
-						{
-							id: "copilot",
-							keys: ["o", "c"],
-							label: "c copilot",
-							action: (pr) => {
-								startCopilot(pr);
-							},
-						},
-					]}
+					}}
 				/>
 				{status && <Text>{status}</Text>}
 				{pullRequests.refreshing && <Spinner label="Refreshing..." />}
