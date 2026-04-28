@@ -18,7 +18,10 @@ export function PullRequestView({
 	return (
 		<Box flexDirection="column">
 			<Text color={color} wrap="truncate">
-				#{pullRequest.number} {pullRequest.title}
+				<Text color={pullRequest.draft ? "gray" : "green"}>
+					#{pullRequest.number}
+				</Text>{" "}
+				{pullRequest.title}
 				{pullRequest.draft ? " (draft)" : ""}
 				<Text dimColor> by {pullRequest.author}</Text>
 			</Text>

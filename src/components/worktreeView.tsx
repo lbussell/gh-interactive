@@ -9,6 +9,12 @@ type WorktreeViewProps = {
 	pullRequests: WorktreePullRequest[] | null;
 };
 
+function prColor(pr: WorktreePullRequest): string {
+	if (pr.state === "merged" || pr.state === "closed") return "magenta";
+	if (pr.draft) return "gray";
+	return "green";
+}
+
 function formatPR(pr: WorktreePullRequest): string {
 	const state =
 		pr.state === "merged"
@@ -47,7 +53,12 @@ export function WorktreeView({
 				{pullRequests === null && branch && <Spinner label="" />}
 				{pullRequests && pullRequests.length > 0 && (
 					<Text dimColor wrap="truncate">
-						{pullRequests.map(formatPR).join(", ")}
+						{pullRequests.map((pr, i) => (
+							<Text key={pr.number}>
+								{i > 0 ? ", " : ""}
+								<Text color={prColor(pr)}>{formatPR(pr)}</Text>
+							</Text>
+						))}
 					</Text>
 				)}
 			</Box>
