@@ -1,5 +1,5 @@
 import { Box, useApp } from "ink";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAsyncCached } from "./cache";
 import { ShortcutFooter } from "./components/shortcutFooter";
 import { TabContent, Tabs } from "./components/tabs";
@@ -21,6 +21,11 @@ export const App = () => {
 	const cacheDir = useCacheDir();
 	const [activeTab, setActiveTab] = useState("branches");
 	const [focusWorktree, setFocusWorktree] = useState<string | null>(null);
+
+	// Clear focusWorktree after one render so it doesn't keep re-triggering
+	useEffect(() => {
+		if (focusWorktree) setFocusWorktree(null);
+	}, [focusWorktree]);
 
 	const fetchBranches = useCallback(() => getLocalBranches(git), [git]);
 	const fetchWorktrees = useCallback(() => getWorktrees(git), [git]);

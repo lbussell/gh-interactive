@@ -75,8 +75,12 @@ export function Select<T>({
 		}
 	}, [items.length, selectIndex]);
 
+	const lastFocusKeyRef = useRef<string | null>(null);
+
 	useEffect(() => {
 		if (!focusKey || items.length === 0) return;
+		if (focusKey === lastFocusKeyRef.current) return;
+		lastFocusKeyRef.current = focusKey;
 		const index = items.findIndex((item) => keyOf(item) === focusKey);
 		if (index >= 0) {
 			selectIndex(index);
