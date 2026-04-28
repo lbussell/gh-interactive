@@ -153,7 +153,7 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 					{
 						id: "open-in-vscode",
 						keys: ["o", "e"],
-						label: "e editor",
+						label: "e code",
 						action: (pr) => {
 							openInVSCode(pr);
 						},

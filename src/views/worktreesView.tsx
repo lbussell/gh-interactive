@@ -92,7 +92,7 @@ export function WorktreesView({
 					{
 						id: "open-in-vscode",
 						keys: ["o", "e"],
-						label: "e editor",
+						label: "e code",
 						action: (worktree) => {
 							Bun.spawn(["code", worktree.path], {
 								stdout: "ignore",
