@@ -1,23 +1,20 @@
+import { spawnSync } from "node:child_process";
+
 export type ExitAction =
 	| { type: "print"; value: string }
 	| { type: "exec"; command: string[]; cwd?: string };
 
-export async function handleExitAction(action: ExitAction): Promise<never> {
+export function handleExitAction(action: ExitAction): never {
 	if (action.type === "print") {
 		process.stdout.write(`${action.value}\n`);
 		process.exit(0);
 	}
 
-	const shell = process.env.SHELL || "/bin/sh";
-	const cmd = action.command.join(" ");
-	const proc = Bun.spawn([shell, "-ic", cmd], {
-		stdin: "inherit",
-		stdout: "inherit",
-		stderr: "inherit",
+	const result = spawnSync(action.command[0], action.command.slice(1), {
+		stdio: "inherit",
 		cwd: action.cwd,
 	});
-	const exitCode = await proc.exited;
-	process.exit(exitCode);
+	process.exit(result.status ?? 1);
 }
 
 export function isExitAction(value: unknown): value is ExitAction {

@@ -39,7 +39,7 @@ try {
 
 	const output = await waitUntilExit();
 	if (isExitAction(output)) {
-		await handleExitAction(output);
+		handleExitAction(output);
 	} else if (typeof output === "string") {
 		process.stdout.write(`${output}\n`);
 	}
