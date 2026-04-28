@@ -8,7 +8,9 @@ export async function handleExitAction(action: ExitAction): Promise<never> {
 		process.exit(0);
 	}
 
-	const proc = Bun.spawn(action.command, {
+	const shell = process.env.SHELL || "/bin/sh";
+	const cmd = action.command.join(" ");
+	const proc = Bun.spawn([shell, "-ic", cmd], {
 		stdin: "inherit",
 		stdout: "inherit",
 		stderr: "inherit",
