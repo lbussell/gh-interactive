@@ -52,7 +52,10 @@ export const App = () => {
 		<Box flexDirection="column">
 			<Tabs height={15}>
 				<TabContent id="branches" label="Branches">
-					<BranchesView branches={branches} />
+					<BranchesView
+						branches={branches}
+						onBranchDeleted={branches.refresh}
+					/>
 				</TabContent>
 				<TabContent id="worktrees" label="Worktrees">
 					<WorktreesView

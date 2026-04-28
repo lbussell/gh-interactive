@@ -3,24 +3,38 @@ import { Text, useApp } from "ink";
 import { useCallback, useState } from "react";
 import type { CachedAsyncState } from "../cache";
 import { BranchView } from "../components/branchView";
+import { ConfirmDialog } from "../components/confirmDialog";
 import { Select } from "../components/select";
 import { useCacheDir } from "../context/cacheContext";
 import { useGit } from "../context/gitContext";
 import type { ExitAction } from "../exitAction";
-import { type Branch, ensureBranchWorktree } from "../git";
+import { type Branch, deleteBranch, ensureBranchWorktree } from "../git";
 import { withStatus } from "../statusAction";
 import { formatError } from "../util";
 import { copilotExitAction, openInEditor } from "../worktreeActions";
 
 type BranchesViewProps = {
 	branches: CachedAsyncState<Branch[]>;
+	onBranchDeleted: () => void;
 };
 
-export function BranchesView({ branches }: BranchesViewProps) {
+function isUnmergedBranchError(err: unknown): boolean {
+	return err instanceof Error && err.message.includes("not fully merged");
+}
+
+type DeleteState =
+	| null
+	| { step: "confirm"; branch: Branch }
+	| { step: "confirm-force"; branch: Branch };
+
+export function BranchesView({ branches, onBranchDeleted }: BranchesViewProps) {
 	const { exit } = useApp();
 	const git = useGit();
 	const cacheDir = useCacheDir();
 	const [status, setStatus] = useState<string | null>(null);
+	const [deleteState, setDeleteState] = useState<DeleteState>(null);
+	const [submitting, setSubmitting] = useState(false);
+	const [deleteError, setDeleteError] = useState<string | null>(null);
 
 	const openInVSCode = useCallback(
 		(branch: Branch) =>
@@ -66,6 +80,76 @@ export function BranchesView({ branches }: BranchesViewProps) {
 		[git, exit],
 	);
 
+	const handleDelete = async () => {
+		if (!deleteState) return;
+		setSubmitting(true);
+		setDeleteError(null);
+		try {
+			await deleteBranch(git, deleteState.branch.name);
+			setDeleteState(null);
+			onBranchDeleted();
+		} catch (err) {
+			if (isUnmergedBranchError(err)) {
+				setDeleteState({ step: "confirm-force", branch: deleteState.branch });
+				setSubmitting(false);
+				return;
+			}
+			setDeleteError(formatError(err));
+			setSubmitting(false);
+		}
+	};
+
+	const handleForceDelete = async () => {
+		if (!deleteState) return;
+		setSubmitting(true);
+		setDeleteError(null);
+		try {
+			await deleteBranch(git, deleteState.branch.name, true);
+			setDeleteState(null);
+			onBranchDeleted();
+		} catch (err) {
+			setDeleteError(formatError(err));
+			setSubmitting(false);
+		}
+	};
+
+	if (deleteState?.step === "confirm-force") {
+		return (
+			<ConfirmDialog
+				title="Force Delete Branch?"
+				onConfirm={handleForceDelete}
+				onCancel={() => setDeleteState(null)}
+				yesLabel="Yes, force delete"
+				noLabel="No, keep the branch"
+				color="red"
+				submitting={submitting}
+				error={deleteError}
+			>
+				<Text>
+					Branch '{deleteState.branch.name}' is not fully merged (common with
+					squash-merged PRs).
+				</Text>
+			</ConfirmDialog>
+		);
+	}
+
+	if (deleteState?.step === "confirm") {
+		return (
+			<ConfirmDialog
+				title="Delete Branch"
+				onConfirm={handleDelete}
+				onCancel={() => setDeleteState(null)}
+				yesLabel="Yes, delete the branch"
+				noLabel="No, keep the branch"
+				color="red"
+				submitting={submitting}
+				error={deleteError}
+			>
+				<Text>Delete branch '{deleteState.branch.name}'?</Text>
+			</ConfirmDialog>
+		);
+	}
+
 	if (branches.status === "loading") {
 		return <Spinner label="Loading branches..." />;
 	}
@@ -102,6 +186,12 @@ export function BranchesView({ branches }: BranchesViewProps) {
 						action: (branch) => {
 							startCopilot(branch);
 						},
+					},
+					{
+						id: "delete-branch",
+						keys: ["d"],
+						label: "d delete",
+						action: (branch) => setDeleteState({ step: "confirm", branch }),
 					},
 				]}
 			/>
