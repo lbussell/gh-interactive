@@ -152,15 +152,15 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 					},
 					{
 						id: "open-in-vscode",
-						keys: ["o", "c"],
-						label: "c VS [C]ode",
+						keys: ["o", "e"],
+						label: "e [E]ditor",
 						action: (pr) => {
 							openInVSCode(pr);
 						},
 					},
 					{
 						id: "copilot",
-						keys: ["c"],
+						keys: ["o", "c"],
 						label: "c [C]opilot",
 						action: (pr) => {
 							startCopilot(pr);

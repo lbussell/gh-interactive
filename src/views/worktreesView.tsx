@@ -91,8 +91,8 @@ export function WorktreesView({
 				itemShortcuts={[
 					{
 						id: "open-in-vscode",
-						keys: ["o", "c"],
-						label: "c VS [C]ode",
+						keys: ["o", "e"],
+						label: "e [E]ditor",
 						action: (worktree) => {
 							Bun.spawn(["code", worktree.path], {
 								stdout: "ignore",
@@ -102,7 +102,7 @@ export function WorktreesView({
 					},
 					{
 						id: "copilot",
-						keys: ["c"],
+						keys: ["o", "c"],
 						label: "c [C]opilot",
 						action: (worktree) => {
 							exit({

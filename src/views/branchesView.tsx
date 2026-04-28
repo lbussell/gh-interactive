@@ -103,15 +103,15 @@ export function BranchesView({ branches }: BranchesViewProps) {
 				itemShortcuts={[
 					{
 						id: "open-in-vscode",
-						keys: ["o", "c"],
-						label: "c VS [C]ode",
+						keys: ["o", "e"],
+						label: "e [E]ditor",
 						action: (branch) => {
 							openInVSCode(branch);
 						},
 					},
 					{
 						id: "copilot",
-						keys: ["c"],
+						keys: ["o", "c"],
 						label: "c [C]opilot",
 						action: (branch) => {
 							startCopilot(branch);
