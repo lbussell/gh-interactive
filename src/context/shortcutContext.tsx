@@ -26,8 +26,6 @@ type ShortcutContextType = {
 
 const ShortcutContext = createContext<ShortcutContextType | null>(null);
 
-const SEQUENCE_TIMEOUT = 1000;
-
 function resolveKey(
 	input: string,
 	key: Record<string, boolean>,
@@ -49,7 +47,6 @@ export function ShortcutProvider({ children }: { children: React.ReactNode }) {
 	const [shortcuts, setShortcuts] = useState<Shortcut[]>([]);
 	const [buffer, setBuffer] = useState<string[]>([]);
 	const [locked, setLocked] = useState(false);
-	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const register = useCallback((s: Shortcut) => {
 		setShortcuts((prev) => [...prev, s]);
@@ -80,7 +77,6 @@ export function ShortcutProvider({ children }: { children: React.ReactNode }) {
 			if (exact) {
 				exact.action();
 				setBuffer([]);
-				if (timerRef.current) clearTimeout(timerRef.current);
 				return;
 			}
 
@@ -91,8 +87,6 @@ export function ShortcutProvider({ children }: { children: React.ReactNode }) {
 
 			if (isPrefix) {
 				setBuffer(next);
-				if (timerRef.current) clearTimeout(timerRef.current);
-				timerRef.current = setTimeout(() => setBuffer([]), SEQUENCE_TIMEOUT);
 			} else {
 				setBuffer([]);
 			}
