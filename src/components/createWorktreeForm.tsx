@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { useState } from "react";
 import { useGit } from "../context/gitContext";
 import { addWorktree } from "../git";
+import { formatError } from "../util";
 import { Form, type FormField } from "./form";
 import { Modal } from "./modal";
 
@@ -74,8 +75,7 @@ export function CreateWorktreeForm({
 			await addWorktree(git, worktreePath, base, branchName);
 			onSuccess();
 		} catch (err) {
-			const message = err instanceof Error ? err.message : String(err);
-			setError(message);
+			setError(formatError(err));
 		} finally {
 			setSubmitting(false);
 		}

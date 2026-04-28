@@ -9,6 +9,8 @@ import { useGit } from "../context/gitContext";
 import { useGitHub } from "../context/gitHubContext";
 import type { EnsurePrWorktreeResult } from "../git";
 import type { PullRequest } from "../gitHub";
+import { withStatus } from "../statusAction";
+import { formatError } from "../util";
 import {
 	copilotExitAction,
 	ensurePrWorktreeWithRemote,
@@ -39,52 +41,49 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 	const [status, setStatus] = useState<string | null>(null);
 
 	const createWorktree = useCallback(
-		async (pr: PullRequest) => {
-			setStatus(`Creating worktree for PR #${pr.number}...`);
-			try {
-				const result = await ensurePrWorktreeWithRemote(
-					git,
-					cacheDir,
-					owner,
-					repo,
-					pr.number,
-					pr.branch,
-				);
-				setStatus(worktreeResultMessage(result));
-			} catch (err) {
-				const msg = err instanceof Error ? err.message : String(err);
-				setStatus(`Error: ${msg}`);
-			}
-		},
+		(pr: PullRequest) =>
+			withStatus(
+				setStatus,
+				`Creating worktree for PR #${pr.number}...`,
+				async () => {
+					const result = await ensurePrWorktreeWithRemote(
+						git,
+						cacheDir,
+						owner,
+						repo,
+						pr.number,
+						pr.branch,
+					);
+					return worktreeResultMessage(result);
+				},
+			),
 		[git, cacheDir, owner, repo],
 	);
 
 	const openInVSCode = useCallback(
-		async (pr: PullRequest) => {
-			setStatus(`Opening PR #${pr.number} in VS Code...`);
-			try {
-				const result = await ensurePrWorktreeWithRemote(
-					git,
-					cacheDir,
-					owner,
-					repo,
-					pr.number,
-					pr.branch,
-				);
-				openInEditor(result.path);
-				setStatus(`Opened in VS Code: ${result.path}`);
-			} catch (err) {
-				const msg = err instanceof Error ? err.message : String(err);
-				setStatus(`Error: ${msg}`);
-			}
-		},
+		(pr: PullRequest) =>
+			withStatus(
+				setStatus,
+				`Opening PR #${pr.number} in VS Code...`,
+				async () => {
+					const result = await ensurePrWorktreeWithRemote(
+						git,
+						cacheDir,
+						owner,
+						repo,
+						pr.number,
+						pr.branch,
+					);
+					openInEditor(result.path);
+					return `Opened in VS Code: ${result.path}`;
+				},
+			),
 		[git, cacheDir, owner, repo],
 	);
 
 	const startCopilot = useCallback(
-		async (pr: PullRequest) => {
-			setStatus(`Setting up worktree for Copilot...`);
-			try {
+		(pr: PullRequest) =>
+			withStatus(setStatus, `Setting up worktree for Copilot...`, async () => {
 				const result = await ensurePrWorktreeWithRemote(
 					git,
 					cacheDir,
@@ -94,11 +93,7 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 					pr.branch,
 				);
 				exit(copilotExitAction(result.path));
-			} catch (err) {
-				const msg = err instanceof Error ? err.message : String(err);
-				setStatus(`Error: ${msg}`);
-			}
-		},
+			}),
 		[git, cacheDir, owner, repo, exit],
 	);
 
@@ -107,11 +102,7 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 	}
 
 	if (pullRequests.status === "error") {
-		const message =
-			pullRequests.error instanceof Error
-				? pullRequests.error.message
-				: String(pullRequests.error);
-		return <Text>Error: {message}.</Text>;
+		return <Text>Error: {formatError(pullRequests.error)}.</Text>;
 	}
 
 	return (

@@ -11,6 +11,7 @@ import { ShortcutProvider } from "./context/shortcutContext";
 import { handleExitAction, isExitAction } from "./exitAction";
 import { getRepoName } from "./git";
 import { createOctokit, getRepoSlug } from "./gitHub";
+import { formatError } from "./util";
 
 try {
 	const config = await loadConfig();
@@ -44,8 +45,6 @@ try {
 		process.stdout.write(`${output}\n`);
 	}
 } catch (error) {
-	process.stderr.write(
-		`gh-interactive failed: ${error instanceof Error ? error.message : String(error)}\n`,
-	);
+	process.stderr.write(`gh-interactive failed: ${formatError(error)}\n`);
 	process.exit(1);
 }

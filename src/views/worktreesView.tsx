@@ -8,6 +8,7 @@ import { WorktreeView } from "../components/worktreeView";
 import { useShortcuts } from "../context/shortcutContext";
 import type { Worktree } from "../git";
 import type { WorktreePullRequestMap } from "../gitHub";
+import { formatError } from "../util";
 import {
 	copilotExitAction,
 	openInEditor,
@@ -60,11 +61,7 @@ export function WorktreesView({
 	}
 
 	if (worktrees.status === "error") {
-		const message =
-			worktrees.error instanceof Error
-				? worktrees.error.message
-				: String(worktrees.error);
-		return <Text>Error: {message}.</Text>;
+		return <Text>Error: {formatError(worktrees.error)}.</Text>;
 	}
 
 	return (

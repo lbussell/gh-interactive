@@ -8,6 +8,8 @@ import { useCacheDir } from "../context/cacheContext";
 import { useGit } from "../context/gitContext";
 import type { ExitAction } from "../exitAction";
 import { type Branch, ensureBranchWorktree } from "../git";
+import { withStatus } from "../statusAction";
+import { formatError } from "../util";
 import { copilotExitAction, openInEditor } from "../worktreeActions";
 
 type BranchesViewProps = {
@@ -21,51 +23,45 @@ export function BranchesView({ branches }: BranchesViewProps) {
 	const [status, setStatus] = useState<string | null>(null);
 
 	const openInVSCode = useCallback(
-		async (branch: Branch) => {
-			setStatus(`Opening ${branch.name} in VS Code...`);
-			try {
-				const result = await ensureBranchWorktree(git, cacheDir, branch.name);
-				openInEditor(result.path);
-				setStatus(`Opened in VS Code: ${result.path}`);
-			} catch (err) {
-				const msg = err instanceof Error ? err.message : String(err);
-				setStatus(`Error: ${msg}`);
-			}
-		},
+		(branch: Branch) =>
+			withStatus(
+				setStatus,
+				`Opening ${branch.name} in VS Code...`,
+				async () => {
+					const result = await ensureBranchWorktree(git, cacheDir, branch.name);
+					openInEditor(result.path);
+					return `Opened in VS Code: ${result.path}`;
+				},
+			),
 		[git, cacheDir],
 	);
 
 	const startCopilot = useCallback(
-		async (branch: Branch) => {
-			setStatus(`Setting up worktree for Copilot...`);
-			try {
+		(branch: Branch) =>
+			withStatus(setStatus, `Setting up worktree for Copilot...`, async () => {
 				const result = await ensureBranchWorktree(git, cacheDir, branch.name);
 				exit(copilotExitAction(result.path));
-			} catch (err) {
-				const msg = err instanceof Error ? err.message : String(err);
-				setStatus(`Error: ${msg}`);
-			}
-		},
+			}),
 		[git, cacheDir, exit],
 	);
 
 	const checkoutBranch = useCallback(
-		async (branch: Branch) => {
+		(branch: Branch) => {
 			if (branch.current) {
 				setStatus(`Already on ${branch.name}`);
 				return;
 			}
-			setStatus(`Checking out ${branch.name}...`);
-			try {
-				await git.checkout(branch.name);
-				exit({
-					type: "print",
-					value: `Switched to branch '${branch.name}'`,
-				} satisfies ExitAction);
-			} catch (err) {
-				const msg = err instanceof Error ? err.message : String(err);
-				setStatus(`Error: ${msg}`);
-			}
+			return withStatus(
+				setStatus,
+				`Checking out ${branch.name}...`,
+				async () => {
+					await git.checkout(branch.name);
+					exit({
+						type: "print",
+						value: `Switched to branch '${branch.name}'`,
+					} satisfies ExitAction);
+				},
+			);
 		},
 		[git, exit],
 	);
@@ -75,11 +71,7 @@ export function BranchesView({ branches }: BranchesViewProps) {
 	}
 
 	if (branches.status === "error") {
-		const message =
-			branches.error instanceof Error
-				? branches.error.message
-				: String(branches.error);
-		return <Text>Error: {message}.</Text>;
+		return <Text>Error: {formatError(branches.error)}.</Text>;
 	}
 
 	return (
