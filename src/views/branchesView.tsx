@@ -55,6 +55,27 @@ export function BranchesView({ branches }: BranchesViewProps) {
 		[git, cacheDir, exit],
 	);
 
+	const checkoutBranch = useCallback(
+		async (branch: Branch) => {
+			if (branch.current) {
+				setStatus(`Already on ${branch.name}`);
+				return;
+			}
+			setStatus(`Checking out ${branch.name}...`);
+			try {
+				await git.checkout(branch.name);
+				exit({
+					type: "print",
+					value: `Switched to branch '${branch.name}'`,
+				} satisfies ExitAction);
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				setStatus(`Error: ${msg}`);
+			}
+		},
+		[git, exit],
+	);
+
 	if (branches.status === "loading") {
 		return <Spinner label="Loading branches..." />;
 	}
@@ -76,7 +97,9 @@ export function BranchesView({ branches }: BranchesViewProps) {
 					<BranchView branch={branch} selected={selected} />
 				)}
 				renderEmpty={() => <Text>No local git branches found.</Text>}
-				onSelect={(branch) => exit(branch.name)}
+				onSelect={(branch) => {
+					checkoutBranch(branch);
+				}}
 				itemShortcuts={[
 					{
 						id: "open-in-vscode",
