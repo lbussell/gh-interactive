@@ -5,10 +5,14 @@ import { CreateWorktreeForm } from "../components/createWorktreeForm";
 import { Select } from "../components/select";
 import { WorktreeView } from "../components/worktreeView";
 import { useShortcuts } from "../context/shortcutContext";
-import type { ExitAction } from "../exitAction";
 import type { Worktree } from "../git";
 import type { WorktreePullRequestMap } from "../gitHub";
 import type { CachedAsyncState } from "../hooks";
+import {
+	copilotExitAction,
+	openInEditor,
+	shellExitAction,
+} from "../worktreeActions";
 
 type WorktreesViewProps = {
 	worktrees: CachedAsyncState<Worktree[]>;
@@ -80,37 +84,19 @@ export function WorktreesView({
 					);
 				}}
 				renderEmpty={() => <Text>No worktrees found.</Text>}
-				onSelect={(worktree) => {
-					const shell = process.env.SHELL || "/bin/sh";
-					exit({
-						type: "exec",
-						command: [shell],
-						cwd: worktree.path,
-					} satisfies ExitAction);
-				}}
+				onSelect={(worktree) => exit(shellExitAction(worktree.path))}
 				itemShortcuts={[
 					{
 						id: "open-in-vscode",
 						keys: ["o", "e"],
 						label: "e code",
-						action: (worktree) => {
-							Bun.spawn(["code", worktree.path], {
-								stdout: "ignore",
-								stderr: "ignore",
-							});
-						},
+						action: (worktree) => openInEditor(worktree.path),
 					},
 					{
 						id: "copilot",
 						keys: ["o", "c"],
 						label: "c copilot",
-						action: (worktree) => {
-							exit({
-								type: "exec",
-								command: ["copilot"],
-								cwd: worktree.path,
-							} satisfies ExitAction);
-						},
+						action: (worktree) => exit(copilotExitAction(worktree.path)),
 					},
 				]}
 			/>

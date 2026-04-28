@@ -8,6 +8,7 @@ import { useGit } from "../context/gitContext";
 import type { ExitAction } from "../exitAction";
 import { type Branch, ensureBranchWorktree } from "../git";
 import type { CachedAsyncState } from "../hooks";
+import { copilotExitAction, openInEditor } from "../worktreeActions";
 
 type BranchesViewProps = {
 	branches: CachedAsyncState<Branch[]>;
@@ -24,10 +25,7 @@ export function BranchesView({ branches }: BranchesViewProps) {
 			setStatus(`Opening ${branch.name} in VS Code...`);
 			try {
 				const result = await ensureBranchWorktree(git, cacheDir, branch.name);
-				Bun.spawn(["code", result.path], {
-					stdout: "ignore",
-					stderr: "ignore",
-				});
+				openInEditor(result.path);
 				setStatus(`Opened in VS Code: ${result.path}`);
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
@@ -42,11 +40,7 @@ export function BranchesView({ branches }: BranchesViewProps) {
 			setStatus(`Setting up worktree for Copilot...`);
 			try {
 				const result = await ensureBranchWorktree(git, cacheDir, branch.name);
-				exit({
-					type: "exec",
-					command: ["copilot"],
-					cwd: result.path,
-				} satisfies ExitAction);
+				exit(copilotExitAction(result.path));
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
 				setStatus(`Error: ${msg}`);

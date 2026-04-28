@@ -6,14 +6,15 @@ import { Select } from "../components/select";
 import { useCacheDir } from "../context/cacheContext";
 import { useGit } from "../context/gitContext";
 import { useGitHub } from "../context/gitHubContext";
-import type { ExitAction } from "../exitAction";
-import {
-	type EnsurePrWorktreeResult,
-	ensurePrWorktree,
-	findRemoteForRepo,
-} from "../git";
+import type { EnsurePrWorktreeResult } from "../git";
 import type { PullRequest } from "../gitHub";
 import type { CachedAsyncState } from "../hooks";
+import {
+	copilotExitAction,
+	ensurePrWorktreeWithRemote,
+	openInEditor,
+	openPrInBrowser,
+} from "../worktreeActions";
 
 type PullRequestsViewProps = {
 	pullRequests: CachedAsyncState<PullRequest[]>;
@@ -41,13 +42,13 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 		async (pr: PullRequest) => {
 			setStatus(`Creating worktree for PR #${pr.number}...`);
 			try {
-				const remote = await findRemoteForRepo(git, owner, repo);
-				const result = await ensurePrWorktree(
+				const result = await ensurePrWorktreeWithRemote(
 					git,
 					cacheDir,
+					owner,
+					repo,
 					pr.number,
 					pr.branch,
-					remote,
 				);
 				setStatus(worktreeResultMessage(result));
 			} catch (err) {
@@ -62,18 +63,15 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 		async (pr: PullRequest) => {
 			setStatus(`Opening PR #${pr.number} in VS Code...`);
 			try {
-				const remote = await findRemoteForRepo(git, owner, repo);
-				const result = await ensurePrWorktree(
+				const result = await ensurePrWorktreeWithRemote(
 					git,
 					cacheDir,
+					owner,
+					repo,
 					pr.number,
 					pr.branch,
-					remote,
 				);
-				Bun.spawn(["code", result.path], {
-					stdout: "ignore",
-					stderr: "ignore",
-				});
+				openInEditor(result.path);
 				setStatus(`Opened in VS Code: ${result.path}`);
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
@@ -87,19 +85,15 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 		async (pr: PullRequest) => {
 			setStatus(`Setting up worktree for Copilot...`);
 			try {
-				const remote = await findRemoteForRepo(git, owner, repo);
-				const result = await ensurePrWorktree(
+				const result = await ensurePrWorktreeWithRemote(
 					git,
 					cacheDir,
+					owner,
+					repo,
 					pr.number,
 					pr.branch,
-					remote,
 				);
-				exit({
-					type: "exec",
-					command: ["copilot"],
-					cwd: result.path,
-				} satisfies ExitAction);
+				exit(copilotExitAction(result.path));
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
 				setStatus(`Error: ${msg}`);
@@ -135,12 +129,7 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 						id: "open-in-browser",
 						keys: ["o", "b"],
 						label: "b browser",
-						action: (pr) => {
-							Bun.spawn(["gh", "pr", "view", "--web", String(pr.number)], {
-								stdout: "ignore",
-								stderr: "ignore",
-							});
-						},
+						action: (pr) => openPrInBrowser(pr.number),
 					},
 					{
 						id: "create-worktree",
