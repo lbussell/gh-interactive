@@ -75,7 +75,11 @@ export function Select<T>({
 
 	const move = useCallback(
 		(delta: number) => {
-			const nextIndex = clamp(selectedIndexRef.current + delta, 0, items.length - 1);
+			const nextIndex = clamp(
+				selectedIndexRef.current + delta,
+				0,
+				items.length - 1,
+			);
 			selectIndex(nextIndex);
 		},
 		[items.length, selectIndex],
@@ -102,6 +106,12 @@ export function Select<T>({
 		},
 	}));
 
+	const goToFirst = useCallback(() => selectIndex(0), [selectIndex]);
+	const goToLast = useCallback(
+		() => selectIndex(Math.max(0, items.length - 1)),
+		[items.length, selectIndex],
+	);
+
 	const hasItems = items.length > 0;
 	useShortcuts(
 		[
@@ -114,6 +124,15 @@ export function Select<T>({
 			},
 			{ id: "select-down-arrow", keys: ["<down>"], action: () => move(1) },
 			{ id: "select-down-j", keys: ["j"], action: () => move(1) },
+			{ id: "select-home", keys: ["<home>"], action: goToFirst },
+			{ id: "select-top-g", keys: ["g"], action: goToFirst },
+			{ id: "select-end", keys: ["<end>"], action: goToLast },
+			{
+				id: "select-bottom-G",
+				keys: ["G"],
+				label: "g/G top/bottom",
+				action: goToLast,
+			},
 			{
 				id: "select-enter",
 				keys: ["<enter>"],
@@ -144,7 +163,7 @@ export function Select<T>({
 					</Box>
 				);
 			})}
-			<Spacer/>
+			<Spacer />
 		</Box>
 	);
 }

@@ -39,6 +39,8 @@ function resolveKey(
 	if (key.return) return "<enter>";
 	if (key.escape) return "<escape>";
 	if (key.tab) return "<tab>";
+	if (key.home) return "<home>";
+	if (key.end) return "<end>";
 	if (input) return input;
 	return null;
 }
