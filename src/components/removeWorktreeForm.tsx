@@ -1,4 +1,4 @@
-import { Box, Text, useInput } from "ink";
+import { Text } from "ink";
 import { useState } from "react";
 import { useGit } from "../context/gitContext";
 import { deleteBranch, removeWorktree, type Worktree } from "../git";
@@ -15,47 +15,50 @@ function isUnmergedBranchError(err: unknown): boolean {
 	return err instanceof Error && err.message.includes("not fully merged");
 }
 
+type Step =
+	| { type: "confirm-remove" }
+	| { type: "confirm-delete-branch" }
+	| { type: "confirm-force-delete" };
+
 export function RemoveWorktreeForm({
 	worktree,
 	onSuccess,
 	onCancel,
 }: RemoveWorktreeFormProps) {
 	const git = useGit();
-	const [confirmForceDelete, setConfirmForceDelete] = useState(false);
-	const [deleteBranchChecked, setDeleteBranchChecked] = useState(false);
+	const [step, setStep] = useState<Step>({ type: "confirm-remove" });
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	useInput(
-		(input) => {
-			if (input === "b" && worktree.branch) {
-				setDeleteBranchChecked((v) => !v);
-			}
-		},
-		{ isActive: !submitting && !confirmForceDelete },
-	);
-
-	const handleConfirm = async () => {
+	const handleRemove = async () => {
 		setSubmitting(true);
 		setError(null);
 		try {
 			await removeWorktree(git, worktree.path);
-
-			if (deleteBranchChecked && worktree.branch) {
-				try {
-					await deleteBranch(git, worktree.branch);
-				} catch (err) {
-					if (isUnmergedBranchError(err)) {
-						setConfirmForceDelete(true);
-						setSubmitting(false);
-						return;
-					}
-					throw err;
-				}
+			if (worktree.branch) {
+				setStep({ type: "confirm-delete-branch" });
+				setSubmitting(false);
+			} else {
+				onSuccess(false);
 			}
-
-			onSuccess(deleteBranchChecked);
 		} catch (err) {
+			setError(formatError(err));
+			setSubmitting(false);
+		}
+	};
+
+	const handleDeleteBranch = async () => {
+		setSubmitting(true);
+		setError(null);
+		try {
+			await deleteBranch(git, worktree.branch!);
+			onSuccess(true);
+		} catch (err) {
+			if (isUnmergedBranchError(err)) {
+				setStep({ type: "confirm-force-delete" });
+				setSubmitting(false);
+				return;
+			}
 			setError(formatError(err));
 			setSubmitting(false);
 		}
@@ -73,7 +76,7 @@ export function RemoveWorktreeForm({
 		}
 	};
 
-	if (confirmForceDelete) {
+	if (step.type === "confirm-force-delete") {
 		return (
 			<ConfirmDialog
 				title="Force Delete Branch?"
@@ -92,23 +95,32 @@ export function RemoveWorktreeForm({
 		);
 	}
 
+	if (step.type === "confirm-delete-branch") {
+		return (
+			<ConfirmDialog
+				title="Delete Branch?"
+				onConfirm={handleDeleteBranch}
+				onCancel={() => onSuccess(false)}
+				confirmLabel="delete"
+				cancelLabel="keep"
+				submitting={submitting}
+				error={error}
+			>
+				<Text>Also delete branch '{worktree.branch}'?</Text>
+			</ConfirmDialog>
+		);
+	}
+
 	return (
 		<ConfirmDialog
 			title="Remove Worktree"
-			onConfirm={handleConfirm}
+			onConfirm={handleRemove}
 			onCancel={onCancel}
 			confirmLabel="remove"
 			submitting={submitting}
 			error={error}
 		>
 			<Text>Remove worktree at {worktree.path}?</Text>
-			{worktree.branch && (
-				<Box gap={1} marginTop={1}>
-					<Text>{deleteBranchChecked ? "[✓]" : "[ ]"}</Text>
-					<Text>Also delete branch '{worktree.branch}'</Text>
-					<Text dimColor>(b)</Text>
-				</Box>
-			)}
 		</ConfirmDialog>
 	);
 }
