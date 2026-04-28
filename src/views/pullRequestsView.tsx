@@ -5,8 +5,13 @@ import { PullRequestView } from "../components/pullRequestView";
 import { Select } from "../components/select";
 import { useCacheDir } from "../context/cacheContext";
 import { useGit } from "../context/gitContext";
+import { useGitHub } from "../context/gitHubContext";
 import type { ExitAction } from "../exitAction";
-import { type EnsurePrWorktreeResult, ensurePrWorktree } from "../git";
+import {
+	type EnsurePrWorktreeResult,
+	ensurePrWorktree,
+	findRemoteForRepo,
+} from "../git";
 import type { PullRequest } from "../gitHub";
 import type { CachedAsyncState } from "../hooks";
 
@@ -28,6 +33,7 @@ function worktreeResultMessage(result: EnsurePrWorktreeResult): string {
 export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 	const { exit } = useApp();
 	const git = useGit();
+	const { owner, repo } = useGitHub();
 	const cacheDir = useCacheDir();
 	const [status, setStatus] = useState<string | null>(null);
 
@@ -35,11 +41,13 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 		async (pr: PullRequest) => {
 			setStatus(`Creating worktree for PR #${pr.number}...`);
 			try {
+				const remote = await findRemoteForRepo(git, owner, repo);
 				const result = await ensurePrWorktree(
 					git,
 					cacheDir,
 					pr.number,
 					pr.branch,
+					remote,
 				);
 				setStatus(worktreeResultMessage(result));
 			} catch (err) {
@@ -47,18 +55,20 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 				setStatus(`Error: ${msg}`);
 			}
 		},
-		[git, cacheDir],
+		[git, cacheDir, owner, repo],
 	);
 
 	const openInVSCode = useCallback(
 		async (pr: PullRequest) => {
 			setStatus(`Opening PR #${pr.number} in VS Code...`);
 			try {
+				const remote = await findRemoteForRepo(git, owner, repo);
 				const result = await ensurePrWorktree(
 					git,
 					cacheDir,
 					pr.number,
 					pr.branch,
+					remote,
 				);
 				Bun.spawn(["code", result.path], {
 					stdout: "ignore",
@@ -70,18 +80,20 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 				setStatus(`Error: ${msg}`);
 			}
 		},
-		[git, cacheDir],
+		[git, cacheDir, owner, repo],
 	);
 
 	const startCopilot = useCallback(
 		async (pr: PullRequest) => {
 			setStatus(`Setting up worktree for Copilot...`);
 			try {
+				const remote = await findRemoteForRepo(git, owner, repo);
 				const result = await ensurePrWorktree(
 					git,
 					cacheDir,
 					pr.number,
 					pr.branch,
+					remote,
 				);
 				exit({
 					type: "exec",
@@ -93,7 +105,7 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 				setStatus(`Error: ${msg}`);
 			}
 		},
-		[git, cacheDir, exit],
+		[git, cacheDir, owner, repo, exit],
 	);
 
 	if (pullRequests.status === "loading") {

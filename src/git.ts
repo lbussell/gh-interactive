@@ -19,6 +19,29 @@ export type Worktree = {
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Finds the git remote whose URL matches the given GitHub owner/repo.
+ * Falls back to "origin" if no match is found.
+ */
+export async function findRemoteForRepo(
+	git: SimpleGit,
+	owner: string,
+	repo: string,
+): Promise<string> {
+	const remotes = await git.getRemotes(true);
+	const slug = `${owner}/${repo}`.toLowerCase();
+	for (const remote of remotes) {
+		const url = (remote.refs.fetch || remote.refs.push || "").toLowerCase();
+		if (
+			url.includes(`github.com/${slug}`) ||
+			url.includes(`github.com:${slug}`)
+		) {
+			return remote.name;
+		}
+	}
+	return "origin";
+}
+
 export async function getRepoName(git: SimpleGit): Promise<string> {
 	const toplevel = await git.revparse(["--show-toplevel"]);
 	return basename(toplevel.trim());
@@ -108,6 +131,7 @@ export async function ensurePrWorktree(
 	basePath: string,
 	prNumber: number,
 	branch: string,
+	remote: string,
 ): Promise<EnsurePrWorktreeResult> {
 	const worktreePath = join(basePath, `pr-${prNumber}`);
 
@@ -133,14 +157,14 @@ export async function ensurePrWorktree(
 	if (branchExists) {
 		// Try to fast-forward the local branch from the PR head
 		try {
-			await git.fetch("origin", `pull/${prNumber}/head:${branch}`);
+			await git.fetch(remote, `pull/${prNumber}/head:${branch}`);
 		} catch {
 			// Not a fast-forward or fetch failed — use branch as-is
 		}
 		await git.raw("worktree", "add", worktreePath, branch);
 	} else {
 		// Fetch PR head and create a new local branch
-		await git.fetch("origin", `pull/${prNumber}/head`);
+		await git.fetch(remote, `pull/${prNumber}/head`);
 		await git.raw("worktree", "add", "-b", branch, worktreePath, "FETCH_HEAD");
 	}
 
