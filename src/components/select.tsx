@@ -1,4 +1,4 @@
-import { Box, type DOMElement, Text, useBoxMetrics } from "ink";
+import { Box, type DOMElement, Spacer, Text, useBoxMetrics } from "ink";
 import React, {
 	type ReactNode,
 	useCallback,
@@ -26,6 +26,11 @@ type SelectProps<T> = {
 	itemShortcuts?: ItemShortcut<T>[];
 };
 
+const calculateNumVisibleItems = (itemHeight: number, availableSpace: number) =>
+	itemHeight > 0
+		? Math.max(1, Math.floor(availableSpace / itemHeight))
+		: 1;
+
 export function Select<T>({
 	items,
 	keyOf,
@@ -38,14 +43,10 @@ export function Select<T>({
 	const containerRef = useRef<DOMElement | null>(
 		null,
 	) as unknown as React.RefObject<DOMElement>;
-	const { height, hasMeasured } = useBoxMetrics(containerRef);
+	const { height } = useBoxMetrics(containerRef);
 
 	const itemHeight = 2;
-
-	// Reserve one line for the position indicator, which is always rendered.
-	const fullBudget = hasMeasured ? height : 12;
-	const budget = Math.max(0, fullBudget - 1);
-	const maxVisible = Math.max(1, Math.floor(budget / itemHeight));
+	const maxVisible = calculateNumVisibleItems(itemHeight, height);
 
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [scrollOffset, setScrollOffset] = useState(0);
@@ -81,20 +82,12 @@ export function Select<T>({
 	}, [items.length, selectIndex]);
 
 	const moveUp = useCallback(() => {
-		if (items.length === 0) return;
-		const nextIndex =
-			selectedIndexRef.current === 0
-				? items.length - 1
-				: selectedIndexRef.current - 1;
+		const nextIndex = Math.max(selectedIndexRef.current - 1, 0);
 		selectIndex(nextIndex);
 	}, [items.length, selectIndex]);
 
 	const moveDown = useCallback(() => {
-		if (items.length === 0) return;
-		const nextIndex =
-			selectedIndexRef.current === items.length - 1
-				? 0
-				: selectedIndexRef.current + 1;
+		const nextIndex = Math.min(selectedIndexRef.current + 1, items.length - 1);
 		selectIndex(nextIndex);
 	}, [items.length, selectIndex]);
 
@@ -153,10 +146,9 @@ export function Select<T>({
 
 	const visibleCount = Math.min(maxVisible, items.length - scrollOffset);
 	const visibleItems = items.slice(scrollOffset, scrollOffset + visibleCount);
-	const padLines = Math.max(0, budget - visibleCount * itemHeight);
 
 	return (
-		<Box ref={containerRef} flexDirection="column" flexGrow={1}>
+		<Box ref={containerRef} flexDirection="column" height={40}>
 			{visibleItems.map((item, visibleIndex) => {
 				const actualIndex = visibleIndex + scrollOffset;
 				const selected = actualIndex === selectedIndex;
@@ -168,8 +160,7 @@ export function Select<T>({
 					</Box>
 				);
 			})}
-			{padLines > 0 && <Box height={padLines} />}
-			<Text dimColor>{`${padding}${selectedIndex + 1}/${items.length}`}</Text>
+			<Spacer/>
 		</Box>
 	);
 }

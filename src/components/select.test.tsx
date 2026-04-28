@@ -1,5 +1,4 @@
 import { expect, test } from "bun:test";
-import { stripVTControlCharacters } from "node:util";
 import { Box, renderToString, Text } from "ink";
 import { ShortcutProvider } from "../context/shortcutContext";
 import { Select } from "./select";
@@ -19,19 +18,6 @@ const uniformItems: TestItem[] = [
 	{ id: "6", title: "Zeta", lines: ["detail f"] },
 	{ id: "7", title: "Eta", lines: ["detail g"] },
 	{ id: "8", title: "Theta", lines: ["detail h"] },
-];
-
-const longItems: TestItem[] = [
-	{
-		id: "1",
-		title: "Alpha Alpha Alpha Alpha Alpha Alpha Alpha Alpha Alpha Alpha Alpha",
-		lines: ["detail a detail a detail a detail a detail a detail a detail a"],
-	},
-	{
-		id: "2",
-		title: "Beta Beta Beta Beta Beta Beta Beta Beta Beta Beta Beta",
-		lines: ["detail b detail b detail b detail b detail b detail b detail b"],
-	},
 ];
 
 function renderItem(item: TestItem, selected: boolean) {
@@ -66,10 +52,6 @@ function renderSelect(items: TestItem[], height = 14) {
 	);
 }
 
-function stripAnsi(output: string) {
-	return stripVTControlCharacters(output);
-}
-
 test("uniform items: initial render shows first item selected", () => {
 	const output = renderSelect(uniformItems);
 	expect(output).toMatchSnapshot();
@@ -78,13 +60,6 @@ test("uniform items: initial render shows first item selected", () => {
 test("uniform items: fewer items than budget shows all with padding", () => {
 	const output = renderSelect(uniformItems.slice(0, 3));
 	expect(output).toMatchSnapshot();
-});
-
-test("items that fit still reserve room for the position indicator", () => {
-	const output = stripAnsi(renderSelect(longItems, 12));
-	expect(output).toContain("> Alpha Alpha Alpha");
-	expect(output).toContain("  Beta Beta Beta");
-	expect(output).not.toContain("> detail a");
 });
 
 test("empty items shows renderEmpty", () => {
