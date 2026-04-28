@@ -23,6 +23,7 @@ type SelectProps<T> = {
 	renderItem: (item: T, selected: boolean) => ReactNode;
 	renderEmpty?: () => ReactNode;
 	selector?: string;
+	focusKey?: string | null;
 	onSelect: (item: T) => void;
 	itemShortcuts?: ItemShortcut<T>[];
 };
@@ -33,6 +34,7 @@ export function Select<T>({
 	renderItem,
 	renderEmpty,
 	selector = ">",
+	focusKey,
 	onSelect,
 	itemShortcuts,
 }: SelectProps<T>) {
@@ -72,6 +74,14 @@ export function Select<T>({
 			selectIndex(items.length - 1);
 		}
 	}, [items.length, selectIndex]);
+
+	useEffect(() => {
+		if (!focusKey || items.length === 0) return;
+		const index = items.findIndex((item) => keyOf(item) === focusKey);
+		if (index >= 0) {
+			selectIndex(index);
+		}
+	}, [focusKey, items, keyOf, selectIndex]);
 
 	const move = useCallback(
 		(delta: number) => {

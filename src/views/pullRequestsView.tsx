@@ -22,7 +22,7 @@ import {
 type PullRequestsViewProps = {
 	pullRequests: CachedAsyncState<PullRequest[]>;
 	onWorktreeCreated: () => void;
-	onNavigateToWorktrees: () => void;
+	onNavigateToWorktrees: (worktreePath: string) => void;
 };
 
 function worktreeResultMessage(result: EnsurePrWorktreeResult): string {
@@ -46,7 +46,10 @@ export function PullRequestsView({
 	const { owner, repo } = useGitHub();
 	const cacheDir = useCacheDir();
 	const [status, setStatus] = useState<string | null>(null);
-	const [worktreePrompt, setWorktreePrompt] = useState<string | null>(null);
+	const [worktreePrompt, setWorktreePrompt] = useState<{
+		message: string;
+		path: string;
+	} | null>(null);
 
 	const createWorktree = useCallback(
 		async (pr: PullRequest) => {
@@ -61,7 +64,10 @@ export function PullRequestsView({
 					pr.branch,
 				);
 				setStatus(null);
-				setWorktreePrompt(worktreeResultMessage(result));
+				setWorktreePrompt({
+					message: worktreeResultMessage(result),
+					path: result.path,
+				});
 				onWorktreeCreated();
 			} catch (err) {
 				setStatus(`Error: ${formatError(err)}`);
@@ -112,14 +118,15 @@ export function PullRequestsView({
 			<ConfirmDialog
 				title="Worktree Ready"
 				onConfirm={() => {
+					const path = worktreePrompt.path;
 					setWorktreePrompt(null);
-					onNavigateToWorktrees();
+					onNavigateToWorktrees(path);
 				}}
 				onCancel={() => setWorktreePrompt(null)}
 				yesLabel="Yes, go to worktrees"
 				noLabel="No, stay here"
 			>
-				<Text>{worktreePrompt} Go there now?</Text>
+				<Text>{worktreePrompt.message} Go there now?</Text>
 			</ConfirmDialog>
 		);
 	}

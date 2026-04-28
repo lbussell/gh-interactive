@@ -25,6 +25,7 @@ type WorktreesViewProps = {
 	worktrees: CachedAsyncState<Worktree[]>;
 	worktreePRs: WorktreePullRequestMap;
 	worktreeBasePath: string;
+	focusKey?: string | null;
 	onWorktreeCreated: () => void;
 	onWorktreeRemoved: (branchDeleted: boolean) => void;
 };
@@ -33,6 +34,7 @@ export function WorktreesView({
 	worktrees,
 	worktreePRs,
 	worktreeBasePath,
+	focusKey,
 	onWorktreeCreated,
 	onWorktreeRemoved,
 }: WorktreesViewProps) {
@@ -90,6 +92,7 @@ export function WorktreesView({
 			<Select
 				items={worktrees.data}
 				keyOf={(w) => w.path}
+				focusKey={focusKey}
 				renderItem={(worktree, selected) => {
 					const branch = worktree.branch;
 					const prs = branch ? (worktreePRs[branch] ?? null) : null;

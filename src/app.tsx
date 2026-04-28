@@ -20,6 +20,7 @@ export const App = () => {
 	const { octokit, owner, repo } = useGitHub();
 	const cacheDir = useCacheDir();
 	const [activeTab, setActiveTab] = useState("branches");
+	const [focusWorktree, setFocusWorktree] = useState<string | null>(null);
 
 	const fetchBranches = useCallback(() => getLocalBranches(git), [git]);
 	const fetchWorktrees = useCallback(() => getWorktrees(git), [git]);
@@ -63,6 +64,7 @@ export const App = () => {
 						worktrees={worktrees}
 						worktreePRs={worktreePRs}
 						worktreeBasePath={cacheDir}
+						focusKey={focusWorktree}
 						onWorktreeCreated={worktrees.refresh}
 						onWorktreeRemoved={(branchDeleted) => {
 							worktrees.refresh();
@@ -74,7 +76,10 @@ export const App = () => {
 					<PullRequestsView
 						pullRequests={pullRequests}
 						onWorktreeCreated={worktrees.refresh}
-						onNavigateToWorktrees={() => setActiveTab("worktrees")}
+						onNavigateToWorktrees={(path) => {
+							setFocusWorktree(path);
+							setActiveTab("worktrees");
+						}}
 					/>
 				</TabContent>
 			</Tabs>
