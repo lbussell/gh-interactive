@@ -118,7 +118,7 @@ export function ShortcutFooter() {
 			{bufferParts.length > 0 && (
 				<Text>
 					<Text color="yellow">
-						{bufferParts.map((p) => `${p.key} ${p.label}`).join(" → ")}
+						{bufferParts.map((p) => `${p.key}: ${p.label}`).join(" → ")}
 					</Text>
 					<Text dimColor>{" →"}</Text>
 				</Text>
@@ -132,7 +132,7 @@ export function ShortcutFooter() {
 				return (
 					<Box key={rowKey}>
 						{rowEntries.map((entry, colIdx) => {
-							const text = `${entry.keys} ${entry.label}`.padEnd(colWidth);
+							const text = `${entry.keys}: ${entry.label}`.padEnd(colWidth);
 							return (
 								<Text key={entry.keys}>
 									{colIdx > 0 && <Text dimColor>{separator}</Text>}
