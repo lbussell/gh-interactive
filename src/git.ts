@@ -48,21 +48,27 @@ export async function getRepoName(git: SimpleGit): Promise<string> {
 }
 
 export async function getLocalBranches(git: SimpleGit): Promise<Branch[]> {
-	const result = await git.branchLocal();
+	const output = await git.raw(
+		"for-each-ref",
+		"--sort=-committerdate",
+		"--format=%(refname:short)\t%(objectname:short)\t%(subject)\t%(HEAD)",
+		"refs/heads/",
+	);
 	// Artificial delay to test caching
 	await delay(2000);
-	return result.all.flatMap((name) => {
-		const branch = result.branches[name];
-		if (branch === undefined) {
-			return [];
-		}
-		return {
-			name: branch.name,
-			commit: branch.commit,
-			label: branch.label,
-			current: branch.current,
-		};
-	});
+	return output
+		.trim()
+		.split("\n")
+		.filter((line) => line.length > 0)
+		.map((line) => {
+			const [name, commit, label, head] = line.split("\t");
+			return {
+				name: name ?? "",
+				commit: commit ?? "",
+				label: label ?? "",
+				current: head === "*",
+			};
+		});
 }
 
 function parseWorktrees(output: string): Worktree[] {
