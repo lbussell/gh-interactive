@@ -8,8 +8,8 @@ type ConfirmDialogProps = {
 	title: string;
 	onConfirm: () => void;
 	onCancel: () => void;
-	confirmLabel?: string;
-	cancelLabel?: string;
+	yesLabel: string;
+	noLabel: string;
 	submitting?: boolean;
 	error?: string | null;
 	children: ReactNode;
@@ -19,8 +19,8 @@ export function ConfirmDialog({
 	title,
 	onConfirm,
 	onCancel,
-	confirmLabel = "confirm",
-	cancelLabel = "cancel",
+	yesLabel,
+	noLabel,
 	submitting = false,
 	error,
 	children,
@@ -34,7 +34,7 @@ export function ConfirmDialog({
 
 	useInput(
 		(input, key) => {
-			if (input === "y" || key.return) onConfirm();
+			if (input === "y") onConfirm();
 			if (input === "n" || key.escape) onCancel();
 		},
 		{ isActive: !submitting },
@@ -58,13 +58,14 @@ export function ConfirmDialog({
 					<Text color="red">{error}</Text>
 				</Box>
 			)}
-			<Box justifyContent="flex-end" marginTop={1}>
+			<Box flexDirection="column" marginTop={1}>
 				{submitting ? (
 					<Spinner label="Working..." />
 				) : (
-					<Text dimColor>
-						y/Enter {confirmLabel} │ n/Esc {cancelLabel}
-					</Text>
+					<>
+						<Text dimColor>(y) {yesLabel}</Text>
+						<Text dimColor>(n) {noLabel}</Text>
+					</>
 				)}
 			</Box>
 		</Box>
