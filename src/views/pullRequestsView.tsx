@@ -2,6 +2,7 @@ import { Spinner } from "@inkjs/ui";
 import { Text, useApp } from "ink";
 import { useCallback, useState } from "react";
 import type { CachedAsyncState } from "../cache";
+import { ConfirmDialog } from "../components/confirmDialog";
 import { PullRequestView } from "../components/pullRequestView";
 import { Select } from "../components/select";
 import { useCacheDir } from "../context/cacheContext";
@@ -20,43 +21,49 @@ import {
 
 type PullRequestsViewProps = {
 	pullRequests: CachedAsyncState<PullRequest[]>;
+	onNavigateToWorktrees: () => void;
 };
 
 function worktreeResultMessage(result: EnsurePrWorktreeResult): string {
 	switch (result.status) {
 		case "created":
-			return `Worktree created: ${result.path}`;
+			return `Created worktree at ${result.path}.`;
 		case "exists":
-			return `Worktree already exists: ${result.path}`;
+			return `Worktree already exists at ${result.path}.`;
 		case "checked-out":
-			return `Branch already checked out: ${result.path}`;
+			return `Branch already checked out at ${result.path}.`;
 	}
 }
 
-export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
+export function PullRequestsView({
+	pullRequests,
+	onNavigateToWorktrees,
+}: PullRequestsViewProps) {
 	const { exit } = useApp();
 	const git = useGit();
 	const { owner, repo } = useGitHub();
 	const cacheDir = useCacheDir();
 	const [status, setStatus] = useState<string | null>(null);
+	const [worktreePrompt, setWorktreePrompt] = useState<string | null>(null);
 
 	const createWorktree = useCallback(
-		(pr: PullRequest) =>
-			withStatus(
-				setStatus,
-				`Creating worktree for PR #${pr.number}...`,
-				async () => {
-					const result = await ensurePrWorktreeWithRemote(
-						git,
-						cacheDir,
-						owner,
-						repo,
-						pr.number,
-						pr.branch,
-					);
-					return worktreeResultMessage(result);
-				},
-			),
+		async (pr: PullRequest) => {
+			setStatus(`Creating worktree for PR #${pr.number}...`);
+			try {
+				const result = await ensurePrWorktreeWithRemote(
+					git,
+					cacheDir,
+					owner,
+					repo,
+					pr.number,
+					pr.branch,
+				);
+				setStatus(null);
+				setWorktreePrompt(worktreeResultMessage(result));
+			} catch (err) {
+				setStatus(`Error: ${formatError(err)}`);
+			}
+		},
 		[git, cacheDir, owner, repo],
 	);
 
@@ -96,6 +103,23 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 			}),
 		[git, cacheDir, owner, repo, exit],
 	);
+
+	if (worktreePrompt) {
+		return (
+			<ConfirmDialog
+				title="Worktree Ready"
+				onConfirm={() => {
+					setWorktreePrompt(null);
+					onNavigateToWorktrees();
+				}}
+				onCancel={() => setWorktreePrompt(null)}
+				yesLabel="Yes, go to worktrees"
+				noLabel="No, stay here"
+			>
+				<Text>{worktreePrompt} Go there now?</Text>
+			</ConfirmDialog>
+		);
+	}
 
 	if (pullRequests.status === "loading") {
 		return <Spinner label="Loading pull requests..." />;

@@ -1,5 +1,5 @@
 import { Box, useApp } from "ink";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useAsyncCached } from "./cache";
 import { ShortcutFooter } from "./components/shortcutFooter";
 import { TabContent, Tabs } from "./components/tabs";
@@ -19,6 +19,7 @@ export const App = () => {
 	const git = useGit();
 	const { octokit, owner, repo } = useGitHub();
 	const cacheDir = useCacheDir();
+	const [activeTab, setActiveTab] = useState("branches");
 
 	const fetchBranches = useCallback(() => getLocalBranches(git), [git]);
 	const fetchWorktrees = useCallback(() => getWorktrees(git), [git]);
@@ -50,7 +51,7 @@ export const App = () => {
 
 	return (
 		<Box flexDirection="column">
-			<Tabs height={15}>
+			<Tabs activeId={activeTab} onTabChange={setActiveTab} height={15}>
 				<TabContent id="branches" label="Branches">
 					<BranchesView
 						branches={branches}
@@ -70,7 +71,13 @@ export const App = () => {
 					/>
 				</TabContent>
 				<TabContent id="pull-requests" label="Pull Requests">
-					<PullRequestsView pullRequests={pullRequests} />
+					<PullRequestsView
+						pullRequests={pullRequests}
+						onNavigateToWorktrees={() => {
+							worktrees.refresh();
+							setActiveTab("worktrees");
+						}}
+					/>
 				</TabContent>
 			</Tabs>
 			<ShortcutFooter />

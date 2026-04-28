@@ -4,7 +4,6 @@ import {
 	type ReactElement,
 	type ReactNode,
 	useCallback,
-	useState,
 } from "react";
 import { useShortcuts } from "../context/shortcutContext";
 import { TabBar } from "./tabBar";
@@ -20,21 +19,32 @@ export function TabContent({ children }: TabContentProps) {
 }
 
 type TabsProps = {
+	activeId: string;
+	onTabChange: (id: string) => void;
 	children: ReactNode;
 	height?: number;
 };
 
-export function Tabs({ children, height }: TabsProps) {
+export function Tabs({ activeId, onTabChange, children, height }: TabsProps) {
 	const tabs = Children.toArray(children) as ReactElement<TabContentProps>[];
-	const [activeIndex, setActiveIndex] = useState(0);
+	const activeIndex = Math.max(
+		0,
+		tabs.findIndex((t) => t.props.id === activeId),
+	);
 
 	const prevTab = useCallback(
-		() => setActiveIndex((i) => (i === 0 ? tabs.length - 1 : i - 1)),
-		[tabs.length],
+		() =>
+			onTabChange(
+				tabs[activeIndex === 0 ? tabs.length - 1 : activeIndex - 1].props.id,
+			),
+		[tabs, activeIndex, onTabChange],
 	);
 	const nextTab = useCallback(
-		() => setActiveIndex((i) => (i === tabs.length - 1 ? 0 : i + 1)),
-		[tabs.length],
+		() =>
+			onTabChange(
+				tabs[activeIndex === tabs.length - 1 ? 0 : activeIndex + 1].props.id,
+			),
+		[tabs, activeIndex, onTabChange],
 	);
 
 	useShortcuts([
