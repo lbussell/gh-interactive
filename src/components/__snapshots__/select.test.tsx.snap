@@ -1,0 +1,69 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`uniform items: initial render shows first item selected 1`] = `
+"> \x1B[32mAlpha\x1B[39m
+  \x1B[32m\x1B[2mdetail a\x1B[22m\x1B[39m
+
+
+
+
+
+
+
+
+
+
+
+"
+`;
+
+exports[`uniform items: fewer items than budget shows all with padding 1`] = `
+"> \x1B[32mAlpha\x1B[39m
+  \x1B[32m\x1B[2mdetail a\x1B[22m\x1B[39m
+
+
+
+
+
+
+
+
+
+
+
+"
+`;
+
+exports[`empty items shows renderEmpty 1`] = `
+"Nothing here.
+
+
+
+
+
+
+
+
+
+
+
+
+"
+`;
+
+exports[`single item renders with position indicator 1`] = `
+"> \x1B[32mAlpha\x1B[39m
+  \x1B[32m\x1B[2mdetail a\x1B[22m\x1B[39m
+
+
+
+
+
+
+
+
+
+
+
+"
+`;

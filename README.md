@@ -19,7 +19,7 @@ gh extension install lbussell/gh-interactive
 ### Prerequisites
 
 - [GitHub CLI](https://cli.github.com/)
-- [bun](https://bun.com/docs/installation)
+- [bun](https://bun.com/docs/installation) - typically `brew install oven-sh/bun/bun`
 
 ### Development
 

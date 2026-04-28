@@ -11,11 +11,11 @@ export function BranchView({ branch, selected }: BranchViewProps) {
 
 	return (
 		<Box flexDirection="column">
-			<Text color={color}>
+			<Text color={color} wrap="truncate">
 				{branch.current ? "* " : ""}
 				{branch.name}
 			</Text>
-			<Text dimColor color={color}>
+			<Text dimColor color={color} wrap="truncate">
 				{branch.commit} {branch.label}
 			</Text>
 		</Box>

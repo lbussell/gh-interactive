@@ -6,20 +6,31 @@ import { loadConfig } from "./config";
 import { CacheDirContext } from "./context/cacheContext";
 import { ConfigContext } from "./context/configContext";
 import { GitContext } from "./context/gitContext";
+import { GitHubContext } from "./context/gitHubContext";
+import { ShortcutProvider } from "./context/shortcutContext";
+import { handleExitAction, isExitAction } from "./exitAction";
 import { getRepoName } from "./git";
+import { createOctokit, getRepoSlug } from "./gitHub";
+import { formatError } from "./util";
 
 try {
 	const config = await loadConfig();
 	const git = simpleGit();
 	const repoName = await getRepoName(git);
 	const cacheDir = join(config.worktreeDirectory, repoName);
+	const octokit = await createOctokit();
+	const { owner, repo } = await getRepoSlug();
 
 	const { waitUntilExit } = render(
 		<ConfigContext value={config}>
 			<GitContext value={git}>
-				<CacheDirContext value={cacheDir}>
-					<App />
-				</CacheDirContext>
+				<GitHubContext value={{ octokit, owner, repo }}>
+					<CacheDirContext value={cacheDir}>
+						<ShortcutProvider>
+							<App />
+						</ShortcutProvider>
+					</CacheDirContext>
+				</GitHubContext>
 			</GitContext>
 		</ConfigContext>,
 		{
@@ -28,12 +39,12 @@ try {
 	);
 
 	const output = await waitUntilExit();
-	if (typeof output === "string") {
+	if (isExitAction(output)) {
+		handleExitAction(output);
+	} else if (typeof output === "string") {
 		process.stdout.write(`${output}\n`);
 	}
 } catch (error) {
-	process.stderr.write(
-		`gh-interactive failed: ${error instanceof Error ? error.message : String(error)}\n`,
-	);
+	process.stderr.write(`gh-interactive failed: ${formatError(error)}\n`);
 	process.exit(1);
 }
