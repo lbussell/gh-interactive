@@ -134,7 +134,7 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 					{
 						id: "open-in-browser",
 						keys: ["o", "b"],
-						label: "b [B]rowser",
+						label: "b browser",
 						action: (pr) => {
 							Bun.spawn(["gh", "pr", "view", "--web", String(pr.number)], {
 								stdout: "ignore",
@@ -153,7 +153,7 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 					{
 						id: "open-in-vscode",
 						keys: ["o", "e"],
-						label: "e [E]ditor",
+						label: "e editor",
 						action: (pr) => {
 							openInVSCode(pr);
 						},
@@ -161,7 +161,7 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 					{
 						id: "copilot",
 						keys: ["o", "c"],
-						label: "c [C]opilot",
+						label: "c copilot",
 						action: (pr) => {
 							startCopilot(pr);
 						},

@@ -104,7 +104,7 @@ export function BranchesView({ branches }: BranchesViewProps) {
 					{
 						id: "open-in-vscode",
 						keys: ["o", "e"],
-						label: "e [E]ditor",
+						label: "e editor",
 						action: (branch) => {
 							openInVSCode(branch);
 						},
@@ -112,7 +112,7 @@ export function BranchesView({ branches }: BranchesViewProps) {
 					{
 						id: "copilot",
 						keys: ["o", "c"],
-						label: "c [C]opilot",
+						label: "c copilot",
 						action: (branch) => {
 							startCopilot(branch);
 						},
