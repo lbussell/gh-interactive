@@ -10,6 +10,7 @@ type ConfirmDialogProps = {
 	onCancel: () => void;
 	yesLabel: string;
 	noLabel: string;
+	color?: string;
 	submitting?: boolean;
 	error?: string | null;
 	children: ReactNode;
@@ -21,6 +22,7 @@ export function ConfirmDialog({
 	onCancel,
 	yesLabel,
 	noLabel,
+	color = "blue",
 	submitting = false,
 	error,
 	children,
@@ -44,11 +46,11 @@ export function ConfirmDialog({
 		<Box
 			flexDirection="column"
 			borderStyle="round"
-			borderColor="blue"
+			borderColor={color}
 			paddingX={1}
 		>
 			<Box marginBottom={1}>
-				<Text bold color="blue">
+				<Text bold color={color}>
 					{title}
 				</Text>
 			</Box>

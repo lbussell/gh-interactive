@@ -84,6 +84,7 @@ export function RemoveWorktreeForm({
 				onCancel={() => onSuccess(false)}
 				yesLabel="Yes, force delete"
 				noLabel="No, keep the branch"
+				color="red"
 				submitting={submitting}
 				error={error}
 			>
@@ -103,6 +104,7 @@ export function RemoveWorktreeForm({
 				onCancel={() => onSuccess(false)}
 				yesLabel="Yes, delete the branch"
 				noLabel="No, keep the branch"
+				color="red"
 				submitting={submitting}
 				error={error}
 			>
@@ -118,6 +120,7 @@ export function RemoveWorktreeForm({
 			onCancel={onCancel}
 			yesLabel="Yes, remove"
 			noLabel="No, do not remove"
+			color="red"
 			submitting={submitting}
 			error={error}
 		>
