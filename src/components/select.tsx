@@ -7,6 +7,7 @@ import React, {
 	useState,
 } from "react";
 import { type Shortcut, useShortcuts } from "../context/shortcutContext";
+import { clamp } from "../util";
 
 export type ItemShortcut<T> = {
 	id: string;
@@ -26,11 +27,6 @@ type SelectProps<T> = {
 	itemShortcuts?: ItemShortcut<T>[];
 };
 
-const calculateNumVisibleItems = (itemHeight: number, availableSpace: number) =>
-	itemHeight > 0
-		? Math.max(1, Math.floor(availableSpace / itemHeight))
-		: 1;
-
 export function Select<T>({
 	items,
 	keyOf,
@@ -46,7 +42,7 @@ export function Select<T>({
 	const { height } = useBoxMetrics(containerRef);
 
 	const itemHeight = 2;
-	const maxVisible = calculateNumVisibleItems(itemHeight, height);
+	const maxVisible = Math.max(1, Math.floor(height / itemHeight));
 
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [scrollOffset, setScrollOffset] = useState(0);
@@ -58,12 +54,8 @@ export function Select<T>({
 			setSelectedIndex(nextIndex);
 
 			setScrollOffset((prev) => {
-				if (nextIndex < prev) {
-					return nextIndex;
-				}
-				if (nextIndex >= prev + maxVisible) {
-					return nextIndex - maxVisible + 1;
-				}
+				if (nextIndex < prev) return nextIndex;
+				if (nextIndex >= prev + maxVisible) return nextIndex - maxVisible + 1;
 				return prev;
 			});
 		},
@@ -81,15 +73,13 @@ export function Select<T>({
 		}
 	}, [items.length, selectIndex]);
 
-	const moveUp = useCallback(() => {
-		const nextIndex = Math.max(selectedIndexRef.current - 1, 0);
-		selectIndex(nextIndex);
-	}, [items.length, selectIndex]);
-
-	const moveDown = useCallback(() => {
-		const nextIndex = Math.min(selectedIndexRef.current + 1, items.length - 1);
-		selectIndex(nextIndex);
-	}, [items.length, selectIndex]);
+	const move = useCallback(
+		(delta: number) => {
+			const nextIndex = clamp(selectedIndexRef.current + delta, 0, items.length - 1);
+			selectIndex(nextIndex);
+		},
+		[items.length, selectIndex],
+	);
 
 	const confirmSelection = useCallback(() => {
 		if (items.length === 0) return;
@@ -99,9 +89,6 @@ export function Select<T>({
 		}
 	}, [items, onSelect]);
 
-	const itemShortcutsRef = useRef<ItemShortcut<T>[]>([]);
-	itemShortcutsRef.current = itemShortcuts ?? [];
-
 	const boundItemShortcuts: Shortcut[] = (itemShortcuts ?? []).map((s) => ({
 		id: s.id,
 		keys: s.keys,
@@ -110,7 +97,7 @@ export function Select<T>({
 		action: () => {
 			const item = items[selectedIndexRef.current];
 			if (item !== undefined) {
-				itemShortcutsRef.current.find((x) => x.id === s.id)?.action(item);
+				s.action(item);
 			}
 		},
 	}));
@@ -118,19 +105,18 @@ export function Select<T>({
 	const hasItems = items.length > 0;
 	useShortcuts(
 		[
-			{ id: "select-up-arrow", keys: ["<up>"], action: moveUp },
+			{ id: "select-up-arrow", keys: ["<up>"], action: () => move(-1) },
 			{
 				id: "select-up-k",
 				keys: ["k"],
-				label: "↑/↓/j/k scroll",
-				action: moveUp,
+				label: "↑↓ nav",
+				action: () => move(-1),
 			},
-			{ id: "select-down-arrow", keys: ["<down>"], action: moveDown },
-			{ id: "select-down-j", keys: ["j"], action: moveDown },
+			{ id: "select-down-arrow", keys: ["<down>"], action: () => move(1) },
+			{ id: "select-down-j", keys: ["j"], action: () => move(1) },
 			{
 				id: "select-enter",
 				keys: ["<enter>"],
-				label: "↵ select",
 				action: confirmSelection,
 			},
 			...boundItemShortcuts,
@@ -138,14 +124,12 @@ export function Select<T>({
 		hasItems,
 	);
 
-	const padding = " ".repeat(selector.length + 1);
-
-	if (items.length === 0) {
+	if (!hasItems) {
 		return <>{renderEmpty?.()}</>;
 	}
 
-	const visibleCount = Math.min(maxVisible, items.length - scrollOffset);
-	const visibleItems = items.slice(scrollOffset, scrollOffset + visibleCount);
+	const padding = " ".repeat(selector.length + 1);
+	const visibleItems = items.slice(scrollOffset, scrollOffset + maxVisible);
 
 	return (
 		<Box ref={containerRef} flexDirection="column" height={40}>

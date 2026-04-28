@@ -44,7 +44,7 @@ export function Tabs({ children, height }: TabsProps) {
 		{
 			id: "tab-next-l",
 			keys: ["l"],
-			label: "←/→/h/l switch tabs",
+			label: "←→ switch tabs",
 			action: nextTab,
 		},
 	]);

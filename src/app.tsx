@@ -50,7 +50,7 @@ export const App = () => {
 	);
 
 	useShortcuts([
-		{ id: "quit", keys: ["q"], label: "q/ctrl+c quit", action: () => exit() },
+		{ id: "quit", keys: ["q"], label: "q quit", action: () => exit() },
 	]);
 
 	return (
