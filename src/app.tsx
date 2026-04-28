@@ -60,7 +60,12 @@ export const App = () => {
 					<BranchesView branches={branches} />
 				</TabContent>
 				<TabContent id="worktrees" label="Worktrees">
-					<WorktreesView worktrees={worktrees} worktreePRs={worktreePRs} />
+					<WorktreesView
+						worktrees={worktrees}
+						worktreePRs={worktreePRs}
+						worktreeBasePath={cacheDir}
+						onWorktreeCreated={worktrees.refresh}
+					/>
 				</TabContent>
 				<TabContent id="pull-requests" label="Pull Requests">
 					<PullRequestsView

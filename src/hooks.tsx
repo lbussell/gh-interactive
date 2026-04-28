@@ -1,7 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { Octokit } from "octokit";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
 	getPullRequestsForBranch,
 	type WorktreePullRequest,
@@ -13,7 +13,10 @@ export type AsyncState<T> =
 	| { status: "done"; data: T; error: null }
 	| { status: "error"; data: null; error: unknown };
 
-export type CachedAsyncState<T> = AsyncState<T> & { refreshing: boolean };
+export type CachedAsyncState<T> = AsyncState<T> & {
+	refreshing: boolean;
+	refresh: () => void;
+};
 
 function isAbortError(error: unknown) {
 	return error instanceof DOMException && error.name === "AbortError";
@@ -70,25 +73,38 @@ export function useAsyncCached<T>(
 		error: null,
 	});
 	const [refreshing, setRefreshing] = useState(true);
+	const [refreshKey, setRefreshKey] = useState(0);
+	const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
 	useEffect(() => {
 		const controller = new AbortController();
 		let hasFreshData = false;
 
-		setState({ status: "loading", data: null, error: null });
+		const isManualRefresh = refreshKey > 0;
+
+		// On manual refresh, keep existing data visible; on first load, reset
+		if (!isManualRefresh) {
+			setState({ status: "loading", data: null, error: null });
+		}
 		setRefreshing(true);
 
-		// Load cached data immediately
-		Bun.file(cacheFilePath)
-			.json()
-			.then((cachedData: unknown) => {
-				if (!controller.signal.aborted && !hasFreshData) {
-					setState({ status: "done", data: cachedData as T, error: null });
-				}
-			})
-			.catch(() => {
-				// Cache miss or invalid JSON — ignore
-			});
+		// Load cached data immediately (skip on manual refresh — we already have data)
+		if (!isManualRefresh) {
+			Bun.file(cacheFilePath)
+				.json()
+				.then((cachedData: unknown) => {
+					if (!controller.signal.aborted && !hasFreshData) {
+						setState({
+							status: "done",
+							data: cachedData as T,
+							error: null,
+						});
+					}
+				})
+				.catch(() => {
+					// Cache miss or invalid JSON — ignore
+				});
+		}
 
 		// Fetch fresh data concurrently
 		asyncFn(controller.signal).then(
@@ -116,9 +132,9 @@ export function useAsyncCached<T>(
 		return () => {
 			controller.abort();
 		};
-	}, [asyncFn, cacheFilePath]);
+	}, [asyncFn, cacheFilePath, refreshKey]);
 
-	return { ...state, refreshing };
+	return { ...state, refreshing, refresh };
 }
 
 /**

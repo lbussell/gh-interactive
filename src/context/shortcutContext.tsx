@@ -20,6 +20,8 @@ type ShortcutContextType = {
 	shortcuts: Shortcut[];
 	register: (s: Shortcut) => () => void;
 	buffer: string[];
+	locked: boolean;
+	setLocked: (v: boolean) => void;
 };
 
 const ShortcutContext = createContext<ShortcutContextType | null>(null);
@@ -44,6 +46,7 @@ function resolveKey(
 export function ShortcutProvider({ children }: { children: React.ReactNode }) {
 	const [shortcuts, setShortcuts] = useState<Shortcut[]>([]);
 	const [buffer, setBuffer] = useState<string[]>([]);
+	const [locked, setLocked] = useState(false);
 	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const register = useCallback((s: Shortcut) => {
@@ -51,48 +54,52 @@ export function ShortcutProvider({ children }: { children: React.ReactNode }) {
 		return () => setShortcuts((prev) => prev.filter((x) => x.id !== s.id));
 	}, []);
 
-	useInput((input, key) => {
-		const resolved = resolveKey(
-			input,
-			key as unknown as Record<string, boolean>,
-		);
-		if (!resolved) return;
+	useInput(
+		(input, key) => {
+			const resolved = resolveKey(
+				input,
+				key as unknown as Record<string, boolean>,
+			);
+			if (!resolved) return;
 
-		if (resolved === "<escape>") {
-			setBuffer([]);
-			return;
-		}
+			if (resolved === "<escape>") {
+				setBuffer([]);
+				return;
+			}
 
-		const next = [...buffer, resolved];
+			const next = [...buffer, resolved];
 
-		const exact = shortcuts.find(
-			(s) =>
-				s.keys.length === next.length && s.keys.every((k, i) => k === next[i]),
-		);
+			const exact = shortcuts.find(
+				(s) =>
+					s.keys.length === next.length &&
+					s.keys.every((k, i) => k === next[i]),
+			);
 
-		if (exact) {
-			exact.action();
-			setBuffer([]);
-			if (timerRef.current) clearTimeout(timerRef.current);
-			return;
-		}
+			if (exact) {
+				exact.action();
+				setBuffer([]);
+				if (timerRef.current) clearTimeout(timerRef.current);
+				return;
+			}
 
-		const isPrefix = shortcuts.some(
-			(s) =>
-				s.keys.length > next.length && next.every((k, i) => s.keys[i] === k),
-		);
+			const isPrefix = shortcuts.some(
+				(s) =>
+					s.keys.length > next.length && next.every((k, i) => s.keys[i] === k),
+			);
 
-		if (isPrefix) {
-			setBuffer(next);
-			if (timerRef.current) clearTimeout(timerRef.current);
-			timerRef.current = setTimeout(() => setBuffer([]), SEQUENCE_TIMEOUT);
-		} else {
-			setBuffer([]);
-		}
-	});
+			if (isPrefix) {
+				setBuffer(next);
+				if (timerRef.current) clearTimeout(timerRef.current);
+				timerRef.current = setTimeout(() => setBuffer([]), SEQUENCE_TIMEOUT);
+			} else {
+				setBuffer([]);
+			}
+		},
+		{ isActive: !locked },
+	);
 
 	return (
-		<ShortcutContext value={{ shortcuts, register, buffer }}>
+		<ShortcutContext value={{ shortcuts, register, buffer, locked, setLocked }}>
 			{children}
 		</ShortcutContext>
 	);

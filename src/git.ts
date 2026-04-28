@@ -76,3 +76,16 @@ export async function getWorktrees(git: SimpleGit): Promise<Worktree[]> {
 	await delay(2000);
 	return parseWorktrees(output);
 }
+
+export async function addWorktree(
+	git: SimpleGit,
+	path: string,
+	base: string,
+	branchName: string | null,
+): Promise<void> {
+	if (branchName) {
+		await git.raw("worktree", "add", "-b", branchName, path, base);
+	} else {
+		await git.raw("worktree", "add", "--detach", path, base);
+	}
+}
