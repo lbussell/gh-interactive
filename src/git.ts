@@ -1,5 +1,5 @@
 import { mkdir } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import type { SimpleGit } from "simple-git";
 
 export type Branch = {
@@ -43,8 +43,13 @@ export async function findRemoteForRepo(
 }
 
 export async function getRepoName(git: SimpleGit): Promise<string> {
-	const toplevel = await git.revparse(["--show-toplevel"]);
-	return basename(toplevel.trim());
+	// Use --git-common-dir instead of --show-toplevel so that running
+	// from inside a worktree still returns the main repository name.
+	const gitCommonDir = await git.revparse([
+		"--path-format=absolute",
+		"--git-common-dir",
+	]);
+	return basename(dirname(gitCommonDir.trim()));
 }
 
 export async function getLocalBranches(git: SimpleGit): Promise<Branch[]> {
