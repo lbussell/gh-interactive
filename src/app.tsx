@@ -60,6 +60,10 @@ export const App = () => {
 						worktreePRs={worktreePRs}
 						worktreeBasePath={cacheDir}
 						onWorktreeCreated={worktrees.refresh}
+						onWorktreeRemoved={(branchDeleted) => {
+							worktrees.refresh();
+							if (branchDeleted) branches.refresh();
+						}}
 					/>
 				</TabContent>
 				<TabContent id="pull-requests" label="Pull Requests">

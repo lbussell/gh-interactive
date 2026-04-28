@@ -3,6 +3,7 @@ import { Text, useApp } from "ink";
 import { useState } from "react";
 import type { CachedAsyncState } from "../cache";
 import { CreateWorktreeForm } from "../components/createWorktreeForm";
+import { RemoveWorktreeForm } from "../components/removeWorktreeForm";
 import { Select } from "../components/select";
 import { WorktreeView } from "../components/worktreeView";
 import { useShortcuts } from "../context/shortcutContext";
@@ -15,11 +16,17 @@ import {
 	shellExitAction,
 } from "../worktreeActions";
 
+type ModalState =
+	| null
+	| { type: "create" }
+	| { type: "remove"; worktree: Worktree };
+
 type WorktreesViewProps = {
 	worktrees: CachedAsyncState<Worktree[]>;
 	worktreePRs: WorktreePullRequestMap;
 	worktreeBasePath: string;
 	onWorktreeCreated: () => void;
+	onWorktreeRemoved: (branchDeleted: boolean) => void;
 };
 
 export function WorktreesView({
@@ -27,9 +34,10 @@ export function WorktreesView({
 	worktreePRs,
 	worktreeBasePath,
 	onWorktreeCreated,
+	onWorktreeRemoved,
 }: WorktreesViewProps) {
 	const { exit } = useApp();
-	const [modalOpen, setModalOpen] = useState(false);
+	const [modal, setModal] = useState<ModalState>(null);
 
 	useShortcuts(
 		[
@@ -37,21 +45,34 @@ export function WorktreesView({
 				id: "create-worktree",
 				keys: ["n"],
 				label: "n new",
-				action: () => setModalOpen(true),
+				action: () => setModal({ type: "create" }),
 			},
 		],
-		!modalOpen,
+		modal === null,
 	);
 
-	if (modalOpen) {
+	if (modal?.type === "create") {
 		return (
 			<CreateWorktreeForm
 				worktreeBasePath={worktreeBasePath}
 				onSuccess={() => {
-					setModalOpen(false);
+					setModal(null);
 					onWorktreeCreated();
 				}}
-				onCancel={() => setModalOpen(false)}
+				onCancel={() => setModal(null)}
+			/>
+		);
+	}
+
+	if (modal?.type === "remove") {
+		return (
+			<RemoveWorktreeForm
+				worktree={modal.worktree}
+				onSuccess={(branchDeleted) => {
+					setModal(null);
+					onWorktreeRemoved(branchDeleted);
+				}}
+				onCancel={() => setModal(null)}
 			/>
 		);
 	}
@@ -94,6 +115,12 @@ export function WorktreesView({
 						keys: ["o", "c"],
 						label: "c copilot",
 						action: (worktree) => exit(copilotExitAction(worktree.path)),
+					},
+					{
+						id: "remove-worktree",
+						keys: ["d"],
+						label: "d remove",
+						action: (worktree) => setModal({ type: "remove", worktree }),
 					},
 				]}
 			/>

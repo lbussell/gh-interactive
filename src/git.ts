@@ -42,6 +42,20 @@ export async function findRemoteForRepo(
 	return "origin";
 }
 
+export async function removeWorktree(
+	git: SimpleGit,
+	path: string,
+): Promise<void> {
+	await git.raw("worktree", "remove", path);
+}
+
+export async function deleteBranch(
+	git: SimpleGit,
+	branch: string,
+): Promise<void> {
+	await git.raw("branch", "-d", branch);
+}
+
 export async function getRepoName(git: SimpleGit): Promise<string> {
 	// Use --git-common-dir instead of --show-toplevel so that running
 	// from inside a worktree still returns the main repository name.
