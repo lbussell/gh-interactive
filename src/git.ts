@@ -1,4 +1,5 @@
-import { basename } from "node:path";
+import { mkdir } from "node:fs/promises";
+import { basename, join } from "node:path";
 import type { SimpleGit } from "simple-git";
 
 export type Branch = {
@@ -88,4 +89,60 @@ export async function addWorktree(
 	} else {
 		await git.raw("worktree", "add", "--detach", path, base);
 	}
+}
+
+export type EnsurePrWorktreeResult =
+	| { status: "created"; path: string }
+	| { status: "exists"; path: string }
+	| { status: "checked-out"; path: string };
+
+/**
+ * Ensures a worktree exists for a given pull request.
+ * - If a worktree at pr-NNNN already exists, returns it.
+ * - If the branch is already checked out in another worktree, returns that path.
+ * - If the branch exists locally, tries to fast-forward it from the PR head, then creates a worktree.
+ * - Otherwise, fetches the PR head and creates a new branch + worktree.
+ */
+export async function ensurePrWorktree(
+	git: SimpleGit,
+	basePath: string,
+	prNumber: number,
+	branch: string,
+): Promise<EnsurePrWorktreeResult> {
+	const worktreePath = join(basePath, `pr-${prNumber}`);
+
+	const worktrees = parseWorktrees(
+		await git.raw("worktree", "list", "--porcelain"),
+	);
+
+	const existing = worktrees.find((w) => w.path === worktreePath);
+	if (existing) return { status: "exists", path: worktreePath };
+
+	const branchWorktree = worktrees.find((w) => w.branch === branch);
+	if (branchWorktree)
+		return { status: "checked-out", path: branchWorktree.path };
+
+	let branchExists = false;
+	try {
+		await git.raw("rev-parse", "--verify", branch);
+		branchExists = true;
+	} catch {}
+
+	await mkdir(basePath, { recursive: true });
+
+	if (branchExists) {
+		// Try to fast-forward the local branch from the PR head
+		try {
+			await git.fetch("origin", `pull/${prNumber}/head:${branch}`);
+		} catch {
+			// Not a fast-forward or fetch failed — use branch as-is
+		}
+		await git.raw("worktree", "add", worktreePath, branch);
+	} else {
+		// Fetch PR head and create a new local branch
+		await git.fetch("origin", `pull/${prNumber}/head`);
+		await git.raw("worktree", "add", "-b", branch, worktreePath, "FETCH_HEAD");
+	}
+
+	return { status: "created", path: worktreePath };
 }

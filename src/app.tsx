@@ -68,10 +68,7 @@ export const App = () => {
 					/>
 				</TabContent>
 				<TabContent id="pull-requests" label="Pull Requests">
-					<PullRequestsView
-						pullRequests={pullRequests}
-						onSelect={(pr) => exit(String(pr.number))}
-					/>
+					<PullRequestsView pullRequests={pullRequests} />
 				</TabContent>
 			</Tabs>
 			<ShortcutFooter />

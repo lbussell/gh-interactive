@@ -1,19 +1,53 @@
 import { Spinner } from "@inkjs/ui";
 import { Text } from "ink";
+import { useCallback, useState } from "react";
 import { PullRequestView } from "../components/pullRequestView";
 import { Select } from "../components/select";
+import { useCacheDir } from "../context/cacheContext";
+import { useGit } from "../context/gitContext";
+import { type EnsurePrWorktreeResult, ensurePrWorktree } from "../git";
 import type { PullRequest } from "../gitHub";
 import type { CachedAsyncState } from "../hooks";
 
 type PullRequestsViewProps = {
 	pullRequests: CachedAsyncState<PullRequest[]>;
-	onSelect: (pr: PullRequest) => void;
 };
 
-export function PullRequestsView({
-	pullRequests,
-	onSelect,
-}: PullRequestsViewProps) {
+function worktreeResultMessage(result: EnsurePrWorktreeResult): string {
+	switch (result.status) {
+		case "created":
+			return `Worktree created: ${result.path}`;
+		case "exists":
+			return `Worktree already exists: ${result.path}`;
+		case "checked-out":
+			return `Branch already checked out: ${result.path}`;
+	}
+}
+
+export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
+	const git = useGit();
+	const cacheDir = useCacheDir();
+	const [status, setStatus] = useState<string | null>(null);
+
+	const createWorktree = useCallback(
+		async (pr: PullRequest) => {
+			setStatus(`Creating worktree for PR #${pr.number}...`);
+			try {
+				const result = await ensurePrWorktree(
+					git,
+					cacheDir,
+					pr.number,
+					pr.branch,
+				);
+				setStatus(worktreeResultMessage(result));
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				setStatus(`Error: ${msg}`);
+			}
+		},
+		[git, cacheDir],
+	);
+
 	if (pullRequests.status === "loading") {
 		return <Spinner label="Loading pull requests..." />;
 	}
@@ -35,7 +69,7 @@ export function PullRequestsView({
 					<PullRequestView pullRequest={pr} selected={selected} />
 				)}
 				renderEmpty={() => <Text>No open pull requests found.</Text>}
-				onSelect={onSelect}
+				onSelect={() => {}}
 				itemShortcuts={[
 					{
 						id: "open-in-browser",
@@ -48,8 +82,17 @@ export function PullRequestsView({
 							});
 						},
 					},
+					{
+						id: "create-worktree",
+						keys: ["w"],
+						label: "w worktree",
+						action: (pr) => {
+							createWorktree(pr);
+						},
+					},
 				]}
 			/>
+			{status && <Text>{status}</Text>}
 			{pullRequests.refreshing && <Spinner label="Refreshing..." />}
 		</>
 	);
