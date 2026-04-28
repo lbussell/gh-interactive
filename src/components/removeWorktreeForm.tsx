@@ -1,10 +1,9 @@
-import { Text } from "ink";
+import { Box, Text, useInput } from "ink";
 import { useState } from "react";
 import { useGit } from "../context/gitContext";
 import { deleteBranch, removeWorktree, type Worktree } from "../git";
 import { formatError } from "../util";
-import { Form, type FormField } from "./form";
-import { Modal } from "./modal";
+import { ConfirmDialog } from "./confirmDialog";
 
 type RemoveWorktreeFormProps = {
 	worktree: Worktree;
@@ -23,8 +22,44 @@ export function RemoveWorktreeForm({
 }: RemoveWorktreeFormProps) {
 	const git = useGit();
 	const [confirmForceDelete, setConfirmForceDelete] = useState(false);
+	const [deleteBranchChecked, setDeleteBranchChecked] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+
+	useInput(
+		(input) => {
+			if (input === "b" && worktree.branch) {
+				setDeleteBranchChecked((v) => !v);
+			}
+		},
+		{ isActive: !submitting && !confirmForceDelete },
+	);
+
+	const handleConfirm = async () => {
+		setSubmitting(true);
+		setError(null);
+		try {
+			await removeWorktree(git, worktree.path);
+
+			if (deleteBranchChecked && worktree.branch) {
+				try {
+					await deleteBranch(git, worktree.branch);
+				} catch (err) {
+					if (isUnmergedBranchError(err)) {
+						setConfirmForceDelete(true);
+						setSubmitting(false);
+						return;
+					}
+					throw err;
+				}
+			}
+
+			onSuccess(deleteBranchChecked);
+		} catch (err) {
+			setError(formatError(err));
+			setSubmitting(false);
+		}
+	};
 
 	const handleForceDelete = async () => {
 		setSubmitting(true);
@@ -40,77 +75,40 @@ export function RemoveWorktreeForm({
 
 	if (confirmForceDelete) {
 		return (
-			<Modal
+			<ConfirmDialog
 				title="Force Delete Branch?"
-				onClose={() => onSuccess(false)}
-				closeable={!submitting}
+				onConfirm={handleForceDelete}
+				onCancel={() => onSuccess(false)}
+				confirmLabel="force delete"
+				cancelLabel="skip"
+				submitting={submitting}
+				error={error}
 			>
 				<Text>
 					Branch '{worktree.branch}' is not fully merged (common with
 					squash-merged PRs).
 				</Text>
-				<Form
-					fields={[]}
-					onSubmit={handleForceDelete}
-					onCancel={() => onSuccess(false)}
-					submitLabel="Force Delete"
-					error={error}
-					submitting={submitting}
-				/>
-			</Modal>
+			</ConfirmDialog>
 		);
 	}
 
-	const fields: FormField[] = worktree.branch
-		? [
-				{
-					type: "checkbox",
-					id: "deleteBranch",
-					label: `Also delete branch '${worktree.branch}'`,
-					defaultValue: false,
-				},
-			]
-		: [];
-
-	const handleSubmit = async (values: Record<string, string | boolean>) => {
-		setSubmitting(true);
-		setError(null);
-		const shouldDeleteBranch =
-			worktree.branch !== null && (values.deleteBranch as boolean);
-
-		try {
-			await removeWorktree(git, worktree.path);
-
-			if (shouldDeleteBranch && worktree.branch) {
-				try {
-					await deleteBranch(git, worktree.branch);
-				} catch (err) {
-					if (isUnmergedBranchError(err)) {
-						setConfirmForceDelete(true);
-						setSubmitting(false);
-						return;
-					}
-					throw err;
-				}
-			}
-
-			onSuccess(shouldDeleteBranch);
-		} catch (err) {
-			setError(formatError(err));
-			setSubmitting(false);
-		}
-	};
-
 	return (
-		<Modal title="Remove Worktree" onClose={onCancel} closeable={!submitting}>
-			<Form
-				fields={fields}
-				onSubmit={handleSubmit}
-				onCancel={onCancel}
-				submitLabel="Remove"
-				error={error}
-				submitting={submitting}
-			/>
-		</Modal>
+		<ConfirmDialog
+			title="Remove Worktree"
+			onConfirm={handleConfirm}
+			onCancel={onCancel}
+			confirmLabel="remove"
+			submitting={submitting}
+			error={error}
+		>
+			<Text>Remove worktree at {worktree.path}?</Text>
+			{worktree.branch && (
+				<Box gap={1} marginTop={1}>
+					<Text>{deleteBranchChecked ? "[✓]" : "[ ]"}</Text>
+					<Text>Also delete branch '{worktree.branch}'</Text>
+					<Text dimColor>(b)</Text>
+				</Box>
+			)}
+		</ConfirmDialog>
 	);
 }
