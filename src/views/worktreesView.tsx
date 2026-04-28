@@ -80,6 +80,19 @@ export function WorktreesView({
 				}}
 				renderEmpty={() => <Text>No worktrees found.</Text>}
 				onSelect={(worktree) => exit(worktree.path)}
+				itemShortcuts={[
+					{
+						id: "open-in-vscode",
+						keys: ["o", "c"],
+						label: "c VS [C]ode",
+						action: (worktree) => {
+							Bun.spawn(["code", worktree.path], {
+								stdout: "ignore",
+								stderr: "ignore",
+							});
+						},
+					},
+				]}
 			/>
 			{worktrees.refreshing && <Spinner label="Refreshing..." />}
 		</>

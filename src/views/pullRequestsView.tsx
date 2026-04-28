@@ -48,6 +48,29 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 		[git, cacheDir],
 	);
 
+	const openInVSCode = useCallback(
+		async (pr: PullRequest) => {
+			setStatus(`Opening PR #${pr.number} in VS Code...`);
+			try {
+				const result = await ensurePrWorktree(
+					git,
+					cacheDir,
+					pr.number,
+					pr.branch,
+				);
+				Bun.spawn(["code", result.path], {
+					stdout: "ignore",
+					stderr: "ignore",
+				});
+				setStatus(`Opened in VS Code: ${result.path}`);
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				setStatus(`Error: ${msg}`);
+			}
+		},
+		[git, cacheDir],
+	);
+
 	if (pullRequests.status === "loading") {
 		return <Spinner label="Loading pull requests..." />;
 	}
@@ -88,6 +111,14 @@ export function PullRequestsView({ pullRequests }: PullRequestsViewProps) {
 						label: "w worktree",
 						action: (pr) => {
 							createWorktree(pr);
+						},
+					},
+					{
+						id: "open-in-vscode",
+						keys: ["o", "c"],
+						label: "c VS [C]ode",
+						action: (pr) => {
+							openInVSCode(pr);
 						},
 					},
 				]}

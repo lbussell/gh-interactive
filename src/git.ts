@@ -146,3 +146,31 @@ export async function ensurePrWorktree(
 
 	return { status: "created", path: worktreePath };
 }
+
+/**
+ * Ensures a worktree exists for a local branch.
+ * - If the branch is already checked out in a worktree, returns that path.
+ * - Otherwise creates a new worktree from the branch.
+ */
+export async function ensureBranchWorktree(
+	git: SimpleGit,
+	basePath: string,
+	branch: string,
+): Promise<EnsurePrWorktreeResult> {
+	const worktreePath = join(basePath, branch);
+	const worktrees = parseWorktrees(
+		await git.raw("worktree", "list", "--porcelain"),
+	);
+
+	const existing = worktrees.find((w) => w.path === worktreePath);
+	if (existing) return { status: "exists", path: worktreePath };
+
+	const branchWorktree = worktrees.find((w) => w.branch === branch);
+	if (branchWorktree)
+		return { status: "checked-out", path: branchWorktree.path };
+
+	await mkdir(basePath, { recursive: true });
+	await git.raw("worktree", "add", worktreePath, branch);
+
+	return { status: "created", path: worktreePath };
+}
