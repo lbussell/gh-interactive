@@ -1,5 +1,5 @@
 import { Spinner } from "@inkjs/ui";
-import { Text, useApp } from "ink";
+import { Box, Text, useApp } from "ink";
 import { useCallback, useState } from "react";
 import type { CachedAsyncState } from "../cache";
 import { ConfirmDialog } from "../components/confirmDialog";
@@ -113,24 +113,6 @@ export function PullRequestsView({
 		[git, cacheDir, owner, repo, exit],
 	);
 
-	if (worktreePrompt) {
-		return (
-			<ConfirmDialog
-				title="Worktree Ready"
-				onConfirm={() => {
-					const path = worktreePrompt.path;
-					setWorktreePrompt(null);
-					onNavigateToWorktrees(path);
-				}}
-				onCancel={() => setWorktreePrompt(null)}
-				yesLabel="Yes, go to worktrees"
-				noLabel="No, stay here"
-			>
-				<Text>{worktreePrompt.message} Go there now?</Text>
-			</ConfirmDialog>
-		);
-	}
-
 	if (pullRequests.status === "loading") {
 		return <Spinner label="Loading pull requests..." />;
 	}
@@ -141,49 +123,66 @@ export function PullRequestsView({
 
 	return (
 		<>
-			<Select
-				items={pullRequests.data}
-				keyOf={(pr) => String(pr.number)}
-				renderItem={(pr, selected) => (
-					<PullRequestView pullRequest={pr} selected={selected} />
-				)}
-				renderEmpty={() => <Text>No open pull requests found.</Text>}
-				onSelect={() => {}}
-				itemShortcuts={[
-					{
-						id: "open-in-browser",
-						keys: ["o", "b"],
-						label: "b browser",
-						action: (pr) => openPrInBrowser(pr.number),
-					},
-					{
-						id: "create-worktree",
-						keys: ["w"],
-						label: "w worktree",
-						action: (pr) => {
-							createWorktree(pr);
+			<Box display={worktreePrompt ? "none" : "flex"} flexDirection="column">
+				<Select
+					items={pullRequests.data}
+					keyOf={(pr) => String(pr.number)}
+					renderItem={(pr, selected) => (
+						<PullRequestView pullRequest={pr} selected={selected} />
+					)}
+					renderEmpty={() => <Text>No open pull requests found.</Text>}
+					onSelect={() => {}}
+					itemShortcuts={[
+						{
+							id: "open-in-browser",
+							keys: ["o", "b"],
+							label: "b browser",
+							action: (pr) => openPrInBrowser(pr.number),
 						},
-					},
-					{
-						id: "open-in-vscode",
-						keys: ["o", "e"],
-						label: "e code",
-						action: (pr) => {
-							openInVSCode(pr);
+						{
+							id: "create-worktree",
+							keys: ["w"],
+							label: "w worktree",
+							action: (pr) => {
+								createWorktree(pr);
+							},
 						},
-					},
-					{
-						id: "copilot",
-						keys: ["o", "c"],
-						label: "c copilot",
-						action: (pr) => {
-							startCopilot(pr);
+						{
+							id: "open-in-vscode",
+							keys: ["o", "e"],
+							label: "e code",
+							action: (pr) => {
+								openInVSCode(pr);
+							},
 						},
-					},
-				]}
-			/>
-			{status && <Text>{status}</Text>}
-			{pullRequests.refreshing && <Spinner label="Refreshing..." />}
+						{
+							id: "copilot",
+							keys: ["o", "c"],
+							label: "c copilot",
+							action: (pr) => {
+								startCopilot(pr);
+							},
+						},
+					]}
+				/>
+				{status && <Text>{status}</Text>}
+				{pullRequests.refreshing && <Spinner label="Refreshing..." />}
+			</Box>
+			{worktreePrompt && (
+				<ConfirmDialog
+					title="Worktree Ready"
+					onConfirm={() => {
+						const path = worktreePrompt.path;
+						setWorktreePrompt(null);
+						onNavigateToWorktrees(path);
+					}}
+					onCancel={() => setWorktreePrompt(null)}
+					yesLabel="Yes, go to worktrees"
+					noLabel="No, stay here"
+				>
+					<Text>{worktreePrompt.message} Go there now?</Text>
+				</ConfirmDialog>
+			)}
 		</>
 	);
 }

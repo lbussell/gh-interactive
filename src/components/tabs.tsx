@@ -6,6 +6,7 @@ import {
 	useCallback,
 } from "react";
 import { useShortcuts } from "../context/shortcutContext";
+import { TabActiveContext } from "../context/tabActiveContext";
 import { TabBar } from "./tabBar";
 
 type TabContentProps = {
@@ -59,18 +60,23 @@ export function Tabs({ activeId, onTabChange, children, height }: TabsProps) {
 		},
 	]);
 
-	const activeTab = tabs[activeIndex];
-	if (!activeTab) return null;
-
 	return (
 		<Box flexDirection="column">
 			<TabBar
 				tabs={tabs.map((t) => ({ id: t.props.id, label: t.props.label }))}
-				activeId={activeTab.props.id}
+				activeId={tabs[activeIndex]?.props.id ?? ""}
 			/>
-			<Box flexDirection="column" height={height}>
-				{activeTab}
-			</Box>
+			{tabs.map((tab, index) => (
+				<TabActiveContext key={tab.props.id} value={index === activeIndex}>
+					<Box
+						display={index === activeIndex ? "flex" : "none"}
+						flexDirection="column"
+						height={height}
+					>
+						{tab}
+					</Box>
+				</TabActiveContext>
+			))}
 		</Box>
 	);
 }

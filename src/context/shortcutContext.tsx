@@ -7,6 +7,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { useTabActive } from "./tabActiveContext";
 
 export type Shortcut = {
 	id: string;
@@ -111,6 +112,7 @@ export function useShortcutContext() {
 
 export function useShortcuts(shortcuts: Shortcut[], enabled = true) {
 	const { register } = useShortcutContext();
+	const tabActive = useTabActive();
 	const actionsRef = useRef<Record<string, () => void>>({});
 
 	for (const s of shortcuts) {
@@ -126,7 +128,7 @@ export function useShortcuts(shortcuts: Shortcut[], enabled = true) {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: depsKey is an intentional stable serialization to avoid re-registering on every render
 	useEffect(() => {
-		if (!enabled) return;
+		if (!enabled || !tabActive) return;
 
 		const unregisters = shortcuts.map((s) =>
 			register({
@@ -143,5 +145,5 @@ export function useShortcuts(shortcuts: Shortcut[], enabled = true) {
 				unregister();
 			}
 		};
-	}, [enabled, register, depsKey]);
+	}, [enabled, tabActive, register, depsKey]);
 }

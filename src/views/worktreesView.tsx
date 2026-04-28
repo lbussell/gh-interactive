@@ -1,5 +1,5 @@
 import { Spinner } from "@inkjs/ui";
-import { Text, useApp } from "ink";
+import { Box, Text, useApp } from "ink";
 import { useState } from "react";
 import type { CachedAsyncState } from "../cache";
 import { CreateWorktreeForm } from "../components/createWorktreeForm";
@@ -53,32 +53,6 @@ export function WorktreesView({
 		modal === null,
 	);
 
-	if (modal?.type === "create") {
-		return (
-			<CreateWorktreeForm
-				worktreeBasePath={worktreeBasePath}
-				onSuccess={() => {
-					setModal(null);
-					onWorktreeCreated();
-				}}
-				onCancel={() => setModal(null)}
-			/>
-		);
-	}
-
-	if (modal?.type === "remove") {
-		return (
-			<RemoveWorktreeForm
-				worktree={modal.worktree}
-				onSuccess={(branchDeleted) => {
-					setModal(null);
-					onWorktreeRemoved(branchDeleted);
-				}}
-				onCancel={() => setModal(null)}
-			/>
-		);
-	}
-
 	if (worktrees.status === "loading") {
 		return <Spinner label="Loading worktrees..." />;
 	}
@@ -89,45 +63,67 @@ export function WorktreesView({
 
 	return (
 		<>
-			<Select
-				items={worktrees.data}
-				keyOf={(w) => w.path}
-				focusKey={focusKey}
-				renderItem={(worktree, selected) => {
-					const branch = worktree.branch;
-					const prs = branch ? (worktreePRs[branch] ?? null) : null;
-					return (
-						<WorktreeView
-							worktree={worktree}
-							selected={selected}
-							pullRequests={prs}
-						/>
-					);
-				}}
-				renderEmpty={() => <Text>No worktrees found.</Text>}
-				onSelect={(worktree) => exit(shellExitAction(worktree.path))}
-				itemShortcuts={[
-					{
-						id: "open-in-vscode",
-						keys: ["o", "e"],
-						label: "e code",
-						action: (worktree) => openInEditor(worktree.path),
-					},
-					{
-						id: "copilot",
-						keys: ["o", "c"],
-						label: "c copilot",
-						action: (worktree) => exit(copilotExitAction(worktree.path)),
-					},
-					{
-						id: "remove-worktree",
-						keys: ["d"],
-						label: "d remove",
-						action: (worktree) => setModal({ type: "remove", worktree }),
-					},
-				]}
-			/>
-			{worktrees.refreshing && <Spinner label="Refreshing..." />}
+			<Box display={modal ? "none" : "flex"} flexDirection="column">
+				<Select
+					items={worktrees.data}
+					keyOf={(w) => w.path}
+					focusKey={focusKey}
+					renderItem={(worktree, selected) => {
+						const branch = worktree.branch;
+						const prs = branch ? (worktreePRs[branch] ?? null) : null;
+						return (
+							<WorktreeView
+								worktree={worktree}
+								selected={selected}
+								pullRequests={prs}
+							/>
+						);
+					}}
+					renderEmpty={() => <Text>No worktrees found.</Text>}
+					onSelect={(worktree) => exit(shellExitAction(worktree.path))}
+					itemShortcuts={[
+						{
+							id: "open-in-vscode",
+							keys: ["o", "e"],
+							label: "e code",
+							action: (worktree) => openInEditor(worktree.path),
+						},
+						{
+							id: "copilot",
+							keys: ["o", "c"],
+							label: "c copilot",
+							action: (worktree) => exit(copilotExitAction(worktree.path)),
+						},
+						{
+							id: "remove-worktree",
+							keys: ["d"],
+							label: "d remove",
+							action: (worktree) => setModal({ type: "remove", worktree }),
+						},
+					]}
+				/>
+				{worktrees.refreshing && <Spinner label="Refreshing..." />}
+			</Box>
+			{modal?.type === "create" && (
+				<CreateWorktreeForm
+					worktreeBasePath={worktreeBasePath}
+					onSuccess={() => {
+						setModal(null);
+						onWorktreeCreated();
+					}}
+					onCancel={() => setModal(null)}
+				/>
+			)}
+			{modal?.type === "remove" && (
+				<RemoveWorktreeForm
+					worktree={modal.worktree}
+					onSuccess={(branchDeleted) => {
+						setModal(null);
+						onWorktreeRemoved(branchDeleted);
+					}}
+					onCancel={() => setModal(null)}
+				/>
+			)}
 		</>
 	);
 }

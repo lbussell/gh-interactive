@@ -1,5 +1,5 @@
 import { Spinner } from "@inkjs/ui";
-import { Text, useApp } from "ink";
+import { Box, Text, useApp } from "ink";
 import { useCallback, useState } from "react";
 import type { CachedAsyncState } from "../cache";
 import { BranchView } from "../components/branchView";
@@ -113,43 +113,6 @@ export function BranchesView({ branches, onBranchDeleted }: BranchesViewProps) {
 		}
 	};
 
-	if (deleteState?.step === "confirm-force") {
-		return (
-			<ConfirmDialog
-				title="Force Delete Branch?"
-				onConfirm={handleForceDelete}
-				onCancel={() => setDeleteState(null)}
-				yesLabel="Yes, force delete"
-				noLabel="No, keep the branch"
-				color="red"
-				submitting={submitting}
-				error={deleteError}
-			>
-				<Text>
-					Branch '{deleteState.branch.name}' is not fully merged (common with
-					squash-merged PRs).
-				</Text>
-			</ConfirmDialog>
-		);
-	}
-
-	if (deleteState?.step === "confirm") {
-		return (
-			<ConfirmDialog
-				title="Delete Branch"
-				onConfirm={handleDelete}
-				onCancel={() => setDeleteState(null)}
-				yesLabel="Yes, delete the branch"
-				noLabel="No, keep the branch"
-				color="red"
-				submitting={submitting}
-				error={deleteError}
-			>
-				<Text>Delete branch '{deleteState.branch.name}'?</Text>
-			</ConfirmDialog>
-		);
-	}
-
 	if (branches.status === "loading") {
 		return <Spinner label="Loading branches..." />;
 	}
@@ -160,43 +123,76 @@ export function BranchesView({ branches, onBranchDeleted }: BranchesViewProps) {
 
 	return (
 		<>
-			<Select
-				items={branches.data}
-				keyOf={(b) => b.name}
-				renderItem={(branch, selected) => (
-					<BranchView branch={branch} selected={selected} />
-				)}
-				renderEmpty={() => <Text>No local git branches found.</Text>}
-				onSelect={(branch) => {
-					checkoutBranch(branch);
-				}}
-				itemShortcuts={[
-					{
-						id: "open-in-vscode",
-						keys: ["o", "e"],
-						label: "e code",
-						action: (branch) => {
-							openInVSCode(branch);
+			<Box display={deleteState ? "none" : "flex"} flexDirection="column">
+				<Select
+					items={branches.data}
+					keyOf={(b) => b.name}
+					renderItem={(branch, selected) => (
+						<BranchView branch={branch} selected={selected} />
+					)}
+					renderEmpty={() => <Text>No local git branches found.</Text>}
+					onSelect={(branch) => {
+						checkoutBranch(branch);
+					}}
+					itemShortcuts={[
+						{
+							id: "open-in-vscode",
+							keys: ["o", "e"],
+							label: "e code",
+							action: (branch) => {
+								openInVSCode(branch);
+							},
 						},
-					},
-					{
-						id: "copilot",
-						keys: ["o", "c"],
-						label: "c copilot",
-						action: (branch) => {
-							startCopilot(branch);
+						{
+							id: "copilot",
+							keys: ["o", "c"],
+							label: "c copilot",
+							action: (branch) => {
+								startCopilot(branch);
+							},
 						},
-					},
-					{
-						id: "delete-branch",
-						keys: ["d"],
-						label: "d delete",
-						action: (branch) => setDeleteState({ step: "confirm", branch }),
-					},
-				]}
-			/>
-			{status && <Text>{status}</Text>}
-			{branches.refreshing && <Spinner label="Refreshing..." />}
+						{
+							id: "delete-branch",
+							keys: ["d"],
+							label: "d delete",
+							action: (branch) => setDeleteState({ step: "confirm", branch }),
+						},
+					]}
+				/>
+				{status && <Text>{status}</Text>}
+				{branches.refreshing && <Spinner label="Refreshing..." />}
+			</Box>
+			{deleteState?.step === "confirm" && (
+				<ConfirmDialog
+					title="Delete Branch"
+					onConfirm={handleDelete}
+					onCancel={() => setDeleteState(null)}
+					yesLabel="Yes, delete the branch"
+					noLabel="No, keep the branch"
+					color="red"
+					submitting={submitting}
+					error={deleteError}
+				>
+					<Text>Delete branch '{deleteState.branch.name}'?</Text>
+				</ConfirmDialog>
+			)}
+			{deleteState?.step === "confirm-force" && (
+				<ConfirmDialog
+					title="Force Delete Branch?"
+					onConfirm={handleForceDelete}
+					onCancel={() => setDeleteState(null)}
+					yesLabel="Yes, force delete"
+					noLabel="No, keep the branch"
+					color="red"
+					submitting={submitting}
+					error={deleteError}
+				>
+					<Text>
+						Branch '{deleteState.branch.name}' is not fully merged (common with
+						squash-merged PRs).
+					</Text>
+				</ConfirmDialog>
+			)}
 		</>
 	);
 }
