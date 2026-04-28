@@ -52,8 +52,9 @@ export async function removeWorktree(
 export async function deleteBranch(
 	git: SimpleGit,
 	branch: string,
+	force = false,
 ): Promise<void> {
-	await git.raw("branch", "-d", branch);
+	await git.raw("branch", force ? "-D" : "-d", branch);
 }
 
 export async function getRepoName(git: SimpleGit): Promise<string> {
