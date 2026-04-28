@@ -30,8 +30,8 @@ export function WorktreesView({
 		[
 			{
 				id: "create-worktree",
-				keys: ["c"],
-				label: "c create",
+				keys: ["n"],
+				label: "n new",
 				action: () => setModalOpen(true),
 			},
 		],
@@ -98,6 +98,18 @@ export function WorktreesView({
 								stdout: "ignore",
 								stderr: "ignore",
 							});
+						},
+					},
+					{
+						id: "copilot",
+						keys: ["c"],
+						label: "c [C]opilot",
+						action: (worktree) => {
+							exit({
+								type: "exec",
+								command: ["copilot"],
+								cwd: worktree.path,
+							} satisfies ExitAction);
 						},
 					},
 				]}
