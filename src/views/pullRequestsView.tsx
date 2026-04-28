@@ -1,6 +1,7 @@
 import { Spinner } from "@inkjs/ui";
 import { Text, useApp } from "ink";
 import { useCallback, useState } from "react";
+import type { CachedAsyncState } from "../cache";
 import { PullRequestView } from "../components/pullRequestView";
 import { Select } from "../components/select";
 import { useCacheDir } from "../context/cacheContext";
@@ -8,7 +9,6 @@ import { useGit } from "../context/gitContext";
 import { useGitHub } from "../context/gitHubContext";
 import type { EnsurePrWorktreeResult } from "../git";
 import type { PullRequest } from "../gitHub";
-import type { CachedAsyncState } from "../hooks";
 import {
 	copilotExitAction,
 	ensurePrWorktreeWithRemote,

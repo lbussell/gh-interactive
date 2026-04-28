@@ -1,6 +1,6 @@
-import { join } from "node:path";
 import { Box, useApp } from "ink";
 import { useCallback, useMemo } from "react";
+import { useAsyncCached } from "./cache";
 import { ShortcutFooter } from "./components/shortcutFooter";
 import { TabContent, Tabs } from "./components/tabs";
 import { useCacheDir } from "./context/cacheContext";
@@ -9,7 +9,7 @@ import { useGitHub } from "./context/gitHubContext";
 import { useShortcuts } from "./context/shortcutContext";
 import { getLocalBranches, getWorktrees } from "./git";
 import { getPullRequests } from "./gitHub";
-import { useAsyncCached, useWorktreePullRequests } from "./hooks";
+import { useWorktreePullRequests } from "./useWorktreePullRequests";
 import { BranchesView } from "./views/branchesView";
 import { PullRequestsView } from "./views/pullRequestsView";
 import { WorktreesView } from "./views/worktreesView";
@@ -20,19 +20,15 @@ export const App = () => {
 	const { octokit, owner, repo } = useGitHub();
 	const cacheDir = useCacheDir();
 
-	const branchesCachePath = join(cacheDir, "branches.cache.json");
-	const worktreesCachePath = join(cacheDir, "worktrees.cache.json");
-	const pullRequestsCachePath = join(cacheDir, "pullRequests.cache.json");
-
 	const fetchBranches = useCallback(() => getLocalBranches(git), [git]);
 	const fetchWorktrees = useCallback(() => getWorktrees(git), [git]);
 	const fetchPullRequests = useCallback(
 		() => getPullRequests(octokit, owner, repo),
 		[octokit, owner, repo],
 	);
-	const branches = useAsyncCached(fetchBranches, branchesCachePath);
-	const worktrees = useAsyncCached(fetchWorktrees, worktreesCachePath);
-	const pullRequests = useAsyncCached(fetchPullRequests, pullRequestsCachePath);
+	const branches = useAsyncCached("branches", fetchBranches);
+	const worktrees = useAsyncCached("worktrees", fetchWorktrees);
+	const pullRequests = useAsyncCached("pullRequests", fetchPullRequests);
 
 	const worktreeBranches = useMemo(() => {
 		if (worktrees.status !== "done") return [];
@@ -46,7 +42,6 @@ export const App = () => {
 		octokit,
 		owner,
 		repo,
-		cacheDir,
 	);
 
 	useShortcuts([

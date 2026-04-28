@@ -1,13 +1,13 @@
 import { Spinner } from "@inkjs/ui";
 import { Text, useApp } from "ink";
 import { useState } from "react";
+import type { CachedAsyncState } from "../cache";
 import { CreateWorktreeForm } from "../components/createWorktreeForm";
 import { Select } from "../components/select";
 import { WorktreeView } from "../components/worktreeView";
 import { useShortcuts } from "../context/shortcutContext";
 import type { Worktree } from "../git";
 import type { WorktreePullRequestMap } from "../gitHub";
-import type { CachedAsyncState } from "../hooks";
 import {
 	copilotExitAction,
 	openInEditor,

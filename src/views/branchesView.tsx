@@ -1,13 +1,13 @@
 import { Spinner } from "@inkjs/ui";
 import { Text, useApp } from "ink";
 import { useCallback, useState } from "react";
+import type { CachedAsyncState } from "../cache";
 import { BranchView } from "../components/branchView";
 import { Select } from "../components/select";
 import { useCacheDir } from "../context/cacheContext";
 import { useGit } from "../context/gitContext";
 import type { ExitAction } from "../exitAction";
 import { type Branch, ensureBranchWorktree } from "../git";
-import type { CachedAsyncState } from "../hooks";
 import { copilotExitAction, openInEditor } from "../worktreeActions";
 
 type BranchesViewProps = {
