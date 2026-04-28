@@ -5,6 +5,7 @@ import { BranchView } from "../components/branchView";
 import { Select } from "../components/select";
 import { useCacheDir } from "../context/cacheContext";
 import { useGit } from "../context/gitContext";
+import type { ExitAction } from "../exitAction";
 import { type Branch, ensureBranchWorktree } from "../git";
 import type { CachedAsyncState } from "../hooks";
 
@@ -36,6 +37,24 @@ export function BranchesView({ branches }: BranchesViewProps) {
 		[git, cacheDir],
 	);
 
+	const startCopilot = useCallback(
+		async (branch: Branch) => {
+			setStatus(`Setting up worktree for Copilot...`);
+			try {
+				const result = await ensureBranchWorktree(git, cacheDir, branch.name);
+				exit({
+					type: "exec",
+					command: ["copilot"],
+					cwd: result.path,
+				} satisfies ExitAction);
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				setStatus(`Error: ${msg}`);
+			}
+		},
+		[git, cacheDir, exit],
+	);
+
 	if (branches.status === "loading") {
 		return <Spinner label="Loading branches..." />;
 	}
@@ -65,6 +84,14 @@ export function BranchesView({ branches }: BranchesViewProps) {
 						label: "c VS [C]ode",
 						action: (branch) => {
 							openInVSCode(branch);
+						},
+					},
+					{
+						id: "copilot",
+						keys: ["c"],
+						label: "c [C]opilot",
+						action: (branch) => {
+							startCopilot(branch);
 						},
 					},
 				]}

@@ -8,6 +8,7 @@ import { ConfigContext } from "./context/configContext";
 import { GitContext } from "./context/gitContext";
 import { GitHubContext } from "./context/gitHubContext";
 import { ShortcutProvider } from "./context/shortcutContext";
+import { handleExitAction, isExitAction } from "./exitAction";
 import { getRepoName } from "./git";
 import { createOctokit, getRepoSlug } from "./gitHub";
 
@@ -37,7 +38,9 @@ try {
 	);
 
 	const output = await waitUntilExit();
-	if (typeof output === "string") {
+	if (isExitAction(output)) {
+		await handleExitAction(output);
+	} else if (typeof output === "string") {
 		process.stdout.write(`${output}\n`);
 	}
 } catch (error) {
