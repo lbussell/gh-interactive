@@ -21,6 +21,7 @@ import {
 
 type PullRequestsViewProps = {
 	pullRequests: CachedAsyncState<PullRequest[]>;
+	onWorktreeCreated: () => void;
 	onNavigateToWorktrees: () => void;
 };
 
@@ -37,6 +38,7 @@ function worktreeResultMessage(result: EnsurePrWorktreeResult): string {
 
 export function PullRequestsView({
 	pullRequests,
+	onWorktreeCreated,
 	onNavigateToWorktrees,
 }: PullRequestsViewProps) {
 	const { exit } = useApp();
@@ -60,11 +62,12 @@ export function PullRequestsView({
 				);
 				setStatus(null);
 				setWorktreePrompt(worktreeResultMessage(result));
+				onWorktreeCreated();
 			} catch (err) {
 				setStatus(`Error: ${formatError(err)}`);
 			}
 		},
-		[git, cacheDir, owner, repo],
+		[git, cacheDir, owner, repo, onWorktreeCreated],
 	);
 
 	const openInVSCode = useCallback(

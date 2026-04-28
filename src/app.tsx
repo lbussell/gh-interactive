@@ -73,10 +73,8 @@ export const App = () => {
 				<TabContent id="pull-requests" label="Pull Requests">
 					<PullRequestsView
 						pullRequests={pullRequests}
-						onNavigateToWorktrees={() => {
-							worktrees.refresh();
-							setActiveTab("worktrees");
-						}}
+						onWorktreeCreated={worktrees.refresh}
+						onNavigateToWorktrees={() => setActiveTab("worktrees")}
 					/>
 				</TabContent>
 			</Tabs>
