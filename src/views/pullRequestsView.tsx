@@ -39,8 +39,8 @@ export function PullRequestsView({
 				itemShortcuts={[
 					{
 						id: "open-in-browser",
-						keys: ["o"],
-						label: "o open",
+						keys: ["o", "b"],
+						label: "b [B]rowser",
 						action: (pr) => {
 							Bun.spawn(["gh", "pr", "view", "--web", String(pr.number)], {
 								stdout: "ignore",
